@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'Auth:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'Auth:lista_usuarios' %}">Lista de Usuários</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ titulo }}</li>
+        </ol>
+    </nav>
+
+    <h1>{{ titulo }}</h1>
+    <hr>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Salvar</button>
+        <a href="{% url 'Auth:lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+{% endblock %}

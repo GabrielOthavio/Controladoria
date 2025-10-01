@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Usuários - Sistema de Auditoria{% endblock %}
+
+{% block content %}
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'Auth:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Lista de Usuários</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gerenciamento de Usuários</h1>
+        <a href="{% url 'Auth:adicionar_usuario' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle-fill me-1"></i> Adicionar Novo Usuário
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Nome Completo</th>
+                    <th scope="col">Usuário</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Perfil</th>
+                    <th scope="col">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <th scope="row">{{ usuario.get_full_name }}</th>
+                    <td>{{ usuario.username }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td><span class="badge bg-secondary">{{ usuario.get_perfil_display }}</span></td>
+                    <td>
+                        <a href="{% url 'Auth:editar_usuario' id_unico=usuario.id_unico %}" class="btn btn-sm btn-outline-primary" aria-label="Editar {{ usuario.username }}">
+                            <i class="bi bi-pencil-fill"></i> Editar
+                        </a>
+                        <a href="{% url 'Auth:excluir_usuario' id_unico=usuario.id_unico %}" class="btn btn-sm btn-outline-danger" aria-label="Excluir {{ usuario.username }}">
+                            <i class="bi bi-trash-fill"></i> Excluir
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhum usuário encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

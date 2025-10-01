@@ -1,0 +1,77 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'Auth:dashboard' %}">
+            <i class="bi bi-shield-check"></i>
+            Sistema Auditoria
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            {% if user.is_authenticated %}
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'Auth:dashboard' %}">
+                        <i class="bi bi-house-door-fill"></i> Dashboard
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'Auth:lista_acoes' %}">
+                        <i class="bi bi-card-checklist"></i> Ações
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'Auth:lista_indices' %}">
+                        <i class="bi bi-graph-up-arrow"></i> Índices
+                    </a>
+                </li>
+
+                {% if user.perfil == 'CHEFE' %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-gear-fill"></i> Cadastros
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'Auth:lista_tipos_acao' %}">Tipos de Ação</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'Auth:lista_tipos_indice' %}">Tipos de Índice</a></li>
+                        <li><a class="dropdown-item" href="{% url 'Auth:lista_grupos_indice' %}">Grupos de Índice</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'Auth:lista_usuarios' %}">
+                         <i class="bi bi-people-fill"></i> Usuários
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i> Olá, {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <form action="{% url 'Auth:logout' %}" method="post" class="d-flex">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">
+                                    <i class="bi bi-box-arrow-right"></i> Sair
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            {% else %}
+             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a href="{% url 'Auth:login' %}" class="btn btn-primary">Entrar</a>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
