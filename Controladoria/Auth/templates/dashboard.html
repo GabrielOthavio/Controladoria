@@ -2,35 +2,278 @@
 
 {% block title %}Dashboard{% endblock %}
 
-{% block content %}
-    <h1 class="mb-4">Dashboard</h1>
-    <p>Bem-vindo ao Sistema de Auditoria, {{ user.get_full_name|default:user.username }}!</p>
+{% block extra_css %}
+<style>
+    /* ========================================
+       DASHBOARD - Design Moderno e Informativo
+       ======================================== */
+    .dashboard-header {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        border-left: 5px solid #2563eb;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .dashboard-header p {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    
+    .welcome-icon {
+        font-size: 2.5rem;
+        color: #2563eb;
+        margin-right: 1rem;
+    }
+    
+    .stat-card {
+        border: none;
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        position: relative;
+        background: white;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--card-color-1), var(--card-color-2));
+    }
+    
+    .stat-card.card-primary {
+        --card-color-1: #2563eb;
+        --card-color-2: #1e40af;
+    }
+    
+    .stat-card.card-success {
+        --card-color-1: #10b981;
+        --card-color-2: #059669;
+    }
+    
+    .stat-card.card-info {
+        --card-color-1: #06b6d4;
+        --card-color-2: #0891b2;
+    }
+    
+    .stat-card.card-warning {
+        --card-color-1: #f59e0b;
+        --card-color-2: #d97706;
+    }
+    
+    .stat-card-header {
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, var(--card-color-1), var(--card-color-2));
+        color: white;
+    }
+    
+    .stat-card-icon {
+        font-size: 3rem;
+        opacity: 0.9;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    .stat-card-header h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0;
+        opacity: 0.95;
+    }
+    
+    .stat-card-body {
+        padding: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .stat-description {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+    
+    .stat-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.75rem;
+    }
+    
+    .badge-primary {
+        background: rgba(37, 99, 235, 0.1);
+        color: #2563eb;
+    }
+    
+    .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .badge-info {
+        background: rgba(6, 182, 212, 0.1);
+        color: #06b6d4;
+    }
+    
+    /* Animação de entrada dos cards */
+    .stat-card {
+        animation: slideInUp 0.5s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .stat-card:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+    
+    .stat-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .stat-card:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .dashboard-header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+        
+        .stat-card-icon {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
 
-    <div class="row">
-        <div class="co  l-md-4">
-            <div class="card text-white bg-primary mb-3">
-                <div class="card-header">Usuários</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ total_usuarios }}</h5>
-                    <p class="card-text">Total de usuários cadastrados no sistema.</p>
+{% block content %}
+    <div class="dashboard-header d-flex align-items-center">
+        <i class="bi bi-speedometer2 welcome-icon"></i>
+        <div>
+            <h1>Dashboard</h1>
+            <p>Bem-vindo, <strong>{{ user.get_full_name|default:user.username }}</strong>! Aqui está um resumo do sistema.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card stat-card card-primary">
+                <div class="stat-card-header">
+                    <div>
+                        <h5>Usuários</h5>
+                    </div>
+                    <div>
+                        <i class="bi bi-people-fill stat-card-icon"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <span class="stat-number">{{ total_usuarios }}</span>
+                    <p class="stat-description">
+                        Total de usuários cadastrados e ativos no sistema de auditoria
+                    </p>
+                    <span class="stat-badge badge-primary">
+                        <i class="bi bi-graph-up-arrow me-1"></i>Sistema
+                    </span>
                 </div>
             </div>
         </div>
+
         <div class="col-md-4">
-            <div class="card text-white bg-success mb-3">
-                <div class="card-header">Ações</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ total_acoes }}</h5>
-                    <p class="card-text">Total de ações registradas.</p>
+            <div class="card stat-card card-success">
+                <div class="stat-card-header">
+                    <div>
+                        <h5>Ações</h5>
+                    </div>
+                    <div>
+                        <i class="bi bi-card-checklist stat-card-icon"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <span class="stat-number">{{ total_acoes }}</span>
+                    <p class="stat-description">
+                        Total de ações registradas e em acompanhamento
+                    </p>
+                    <span class="stat-badge badge-success">
+                        <i class="bi bi-check-circle-fill me-1"></i>Ativo
+                    </span>
                 </div>
             </div>
         </div>
+
         <div class="col-md-4">
-            <div class="card text-white bg-info mb-3">
-                <div class="card-header">Auditorias</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ total_auditorias }}</h5>
-                    <p class="card-text">Total de auditorias realizadas.</p>
+            <div class="card stat-card card-info">
+                <div class="stat-card-header">
+                    <div>
+                        <h5>Auditorias</h5>
+                    </div>
+                    <div>
+                        <i class="bi bi-clipboard-data stat-card-icon"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <span class="stat-number">{{ total_auditorias }}</span>
+                    <p class="stat-description">
+                        Total de auditorias realizadas e documentadas
+                    </p>
+                    <span class="stat-badge badge-info">
+                        <i class="bi bi-shield-check me-1"></i>Concluído
+                    </span>
                 </div>
             </div>
         </div>
