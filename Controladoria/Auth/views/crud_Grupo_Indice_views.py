@@ -3,7 +3,7 @@
 # ==        CRUD PARA GRUPOS DE ÍNDICE        ==
 # ===============================================
 
-from pyexpat.errors import messages
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -57,7 +57,7 @@ def editar_grupo_indice(request, id_unico):
     else:
         form = GrupoIndiceForm(instance=grupo)
         
-    context = {'form': form,'titulo': f'Editando Grupo "{grupo.nome}"'}
+    context = {'form': form,'titulo': f'Editando Grupo "{grupo.nome_grupo_indice}"'}
     return render(request, 'grupos_indice/formulario.html', context)
 
 

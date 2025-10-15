@@ -20,31 +20,31 @@ class Usuario(AbstractUser):
         return self.get_full_name() or self.username
 class TipoAcao(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    nome_acao = models.CharField(max_length=255, verbose_name="Nome da Ação", unique=True)
-    motivo_acao = models.TextField(verbose_name="Motivo da Ação")
+    nome_tipo_acao = models.CharField(max_length=255, verbose_name="Nome da Ação", unique=True)
+    motivo_tipo_acao = models.TextField(verbose_name="Motivo da Ação")
     mensagem_padrao_avaliacao = models.TextField(verbose_name="Mensagem Padrão para Avaliação", blank=True, null=True)
     mensagem_padrao_conclusao = models.TextField(verbose_name="Mensagem Padrão para Conclusão", blank=True, null=True)
     def __str__(self):
-        return self.nome_acao
+        return self.nome_tipo_acao
 
 class GrupoIndice(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    nome = models.CharField(max_length=150, unique=True, verbose_name="Nome do Grupo",help_text="Nome único para o grupo de índice.")
+    nome_grupo_indice = models.CharField(max_length=150, unique=True, verbose_name="Nome do Grupo",help_text="Nome único para o grupo de índice.")
     observacao = models.TextField(blank=True, null=True, verbose_name="Observação")
     class Meta:
         verbose_name = "Grupo de Índice"
         verbose_name_plural = "Grupos de Índices"
-        ordering = ['nome']
+        ordering = ['nome_grupo_indice']
     def __str__(self):
-        return self.nome
+        return self.nome_grupo_indice
     
 class TipoIndice(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    descricao = models.CharField(max_length=255, verbose_name="Descrição")
+    nome_tipo_indice = models.CharField(max_length=255, verbose_name="nome tipo indice", null=True) # Allow null values
     indice_grupo = models.ForeignKey(GrupoIndice, on_delete=models.PROTECT, verbose_name="Grupo do Índice")    
     observacao = models.TextField(blank=True, null=True)
     def __str__(self):
-        return self.descricao
+        return self.nome_tipo_indice
 
 class Acao(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -55,18 +55,19 @@ class Acao(models.Model):
     conclusao = models.TextField()
 
     def __str__(self):
-        return f"{self.tipo_acao.nome_acao} - {self.data_execucao}"
+        return f"{self.tipo_acao.nome_tipo_acao} - {self.data_execucao}"
 
 class Indice(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     tipo_indice = models.ForeignKey(TipoIndice, on_delete=models.PROTECT, verbose_name="Tipo de Índice")
     mes = models.IntegerField(verbose_name="Mês", validators=[MinValueValidator(1), MaxValueValidator(12)])
     ano = models.IntegerField(verbose_name="Ano", validators=[MinValueValidator(2000), MaxValueValidator(datetime.date.today().year + 5)])
+    valor = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
     observacao = models.TextField(blank=True, null=True)
     class Meta:
         unique_together = ('tipo_indice', 'mes', 'ano')
     def __str__(self):
-        return f"{self.tipo_indice.descricao} - {self.mes}/{self.ano}"
+        return f"{self.tipo_indice.nome_tipo_indice} - {self.mes}/{self.ano}"
 
 class Auditoria(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

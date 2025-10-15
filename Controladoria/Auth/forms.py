@@ -52,20 +52,20 @@ class TipoAcaoForm(forms.ModelForm):
     class Meta:
         model = TipoAcao
         # Segurança: listando campos explicitamente.
-        fields = ['nome_acao', 'motivo_acao', 'mensagem_padrao_avaliacao', 'mensagem_padrao_conclusao']
+        fields = ['nome_tipo_acao', 'motivo_tipo_acao', 'mensagem_padrao_avaliacao', 'mensagem_padrao_conclusao']
 
         widgets = {
-            'nome_acao': forms.TextInput(attrs={'class': 'form-control'}),
-            'motivo_acao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'nome_tipo_acao': forms.TextInput(attrs={'class': 'form-control'}),
+            'motivo_tipo_acao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'mensagem_padrao_avaliacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'mensagem_padrao_conclusao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
-    def clean_nome_acao(self):
-        data = self.cleaned_data['nome_acao']
+    def clean_nome_tipo_acao(self):
+        data = self.cleaned_data['nome_tipo_acao']
         return bleach.clean(data, tags=[], strip=True)
 
-    def clean_motivo_acao(self):
-        data = self.cleaned_data['motivo_acao']
+    def clean_motivo_tipo_acao(self):
+        data = self.cleaned_data['motivo_tipo_acao']
         return bleach.clean(data, tags=ALLOWED_TAGS, strip=True)
 
 class AcaoForm(forms.ModelForm):
@@ -111,22 +111,17 @@ ALLOWED_TAGS = ['b', 'i', 'u', 'p', 'br', 'strong', 'em', 'li', 'ul', 'ol']
 class TipoIndiceForm(forms.ModelForm):
     class Meta:
         model = TipoIndice
-        fields = ['descricao', 'indice_grupo', 'observacao']
+        fields = ['nome_tipo_indice', 'indice_grupo', 'observacao']
         # Esta seção garante que os campos tenham a classe 'form-control' do Bootstrap
         widgets = {
-            'descricao': forms.TextInput(attrs={'class': 'form-control'}),
-            'indice_grupo': forms.TextInput(attrs={'class': 'form-control'}),
+            'nome_tipo_indice': forms.TextInput(attrs={'class': 'form-control'}),
+            'indice_grupo': forms.Select(attrs={'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
 
-    # Limpa o campo 'descricao', removendo TODAS as tags HTML
-    def clean_descricao(self):
-        data = self.cleaned_data.get('descricao', '')
-        return bleach.clean(data, tags=[], strip=True)
-
-    # Limpa o campo 'indice_grupo', removendo TODAS as tags HTML
-    def clean_indice_grupo(self):
-        data = self.cleaned_data.get('indice_grupo', '')
+    # Limpa o campo 'nome_tipo_indice', removendo TODAS as tags HTML
+    def clean_nome_tipo_indice(self):
+        data = self.cleaned_data.get('nome_tipo_indice', '')
         return bleach.clean(data, tags=[], strip=True)
 
     # Limpa o campo 'observacao', permitindo apenas as tags seguras listadas em ALLOWED_TAGS
@@ -187,15 +182,15 @@ class GrupoIndiceForm(forms.ModelForm):
     """
     class Meta:
         model = GrupoIndice
-        fields = ['nome', 'observacao']
+        fields = ['nome_grupo_indice', 'observacao']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'nome_grupo_indice': forms.TextInput(attrs={'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
 
-    def clean_nome(self):
-        """ Higieniza o campo 'nome', removendo todas as tags HTML. """
-        data = self.cleaned_data.get('nome', '')
+    def clean_nome_grupo_indice(self):
+        """ Higieniza o campo 'nome_grupo_indice', removendo todas as tags HTML. """
+        data = self.cleaned_data.get('nome_grupo_indice', '')
         return bleach.clean(data, tags=[], strip=True)
 
     def clean_observacao(self):

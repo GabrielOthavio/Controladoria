@@ -15,7 +15,7 @@ def lista_tipos_indice(request):
     """
     Exibe uma lista de todos os Tipos de Índice cadastrados.
     """
-    tipos_indice = TipoIndice.objects.all().order_by('descricao')
+    tipos_indice = TipoIndice.objects.all().order_by('nome_tipo_indice')
     context = {'tipos_indice': tipos_indice}
     return render(request, 'tipos_indice/lista.html', context)
 
@@ -52,7 +52,7 @@ def editar_tipo_indice(request, id_unico):
             return redirect('Auth:lista_tipos_indice')
     else:
         form = TipoIndiceForm(instance=tipo_indice)
-    context = {'form': form,'titulo': f'Editando "{tipo_indice.descricao}"'}
+    context = {'form': form,'titulo': f'Editando "{tipo_indice.nome_tipo_indice}"'}
     return render(request, 'tipos_indice/formulario.html', context)
 
 @login_required(login_url='Auth:login')
