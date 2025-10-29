@@ -43,7 +43,7 @@ def editar_tipo_acao(request, id_unico):
             return redirect('Auth:lista_tipos_acao')
     else:
         form = TipoAcaoForm(instance=tipo_acao)
-    return render(request, 'tipos_acao/formulario.html', {'form': form, 'titulo': f'Editando "{tipo_acao.nome_acao}"'})
+    return render(request, 'tipos_acao/formulario.html', {'form': form, 'titulo': f'Editando "{tipo_acao.nome_tipo_acao}"'})
 
 @login_required(login_url='Auth:login')
 @user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))

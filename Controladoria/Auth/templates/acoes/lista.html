@@ -77,18 +77,18 @@
                     {% for acao in acoes %}
                     <tr>
                         <td><strong>{{ acao.numero_acao }}</strong></td>
-                        <td>{{ acao.tipo_acao.nome_acao }}</td>
+                        <td>{{ acao.tipo_acao.nome_tipo_acao }}</td>
                         <td>
                             <span class="badge bg-success">
                                 {{ acao.data_execucao|date:"d/m/Y" }}
                             </span>
                         </td>
                         <td class="text-center">
-                            <a href="{% url 'Auth:editar_acao' id_unico=tipo.id_unico %}" 
+                            <a href="{% url 'Auth:editar_acao' id_unico=acao.id_unico %}" 
                                class="btn btn-sm btn-outline-primary btn-action">
                                 <i class="bi bi-pencil-fill"></i> Editar
                             </a>
-                            <a href="{% url 'Auth:excluir_acao' id_unico=tipo.id_unico %}" 
+                            <a href="{% url 'Auth:excluir_acao' id_unico=acao.id_unico %}" 
                                class="btn btn-sm btn-outline-danger btn-action">
                                 <i class="bi bi-trash-fill"></i> Excluir
                             </a>
