@@ -12,4 +12,5 @@ urlpatterns = [
     path('', include('Auth.rotas.tipo_acao_urls')),
     path('', include('Auth.rotas.tipo_indice_urls')),
     path('', include('Auth.rotas.grupo_indice_urls')),
+    path('', include('Auth.rotas.usuario_urls')),
 ]

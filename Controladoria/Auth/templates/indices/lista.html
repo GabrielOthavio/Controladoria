@@ -39,6 +39,20 @@
         background: linear-gradient(135deg, #0891b2, #0e7490);
         color: white;
     }
+    
+    .alert-note {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-left: 4px solid #f59e0b;
+        color: #92400e;
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .alert-note i {
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+    }
 </style>
 {% endblock %}
 
@@ -54,6 +68,11 @@
         <a href="{% url 'Auth:adicionar_indice' %}" class="btn btn-add-indice ms-3">
             <i class="bi bi-plus-lg"></i> Adicionar Índice
         </a>
+    </div>
+
+    <div class="alert-note">
+        <i class="bi bi-lightbulb-fill"></i>
+        <strong>Nota:</strong> Funcionalidade de ordenação por coluna em desenvolvimento.
     </div>
 
     <div class="table-card">

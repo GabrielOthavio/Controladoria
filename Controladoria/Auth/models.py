@@ -53,6 +53,7 @@ class Acao(models.Model):
     numero_acao = models.IntegerField(verbose_name="Número da Ação", null=True, blank=True)
     avaliacao = models.TextField()
     conclusao = models.TextField()
+    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, verbose_name="Usuário Responsável")
 
     def __str__(self):
         return f"{self.tipo_acao.nome_tipo_acao} - {self.data_execucao}"

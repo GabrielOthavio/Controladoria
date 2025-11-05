@@ -2,11 +2,13 @@
 # ==              CRUD PARA ÍNDICES            ==
 # ===============================================
 
-from pyexpat.errors import messages
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
 from ..forms import IndiceForm
 from ..models import Indice
+from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
 def lista_indices(request):
@@ -21,9 +23,14 @@ def adicionar_indice(request):
     if request.method == 'POST':
         form = IndiceForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Índice cadastrado com sucesso!')
-            return redirect('Auth:lista_indices')
+            try:
+                form.save()
+                messages.success(request, 'Índice cadastrado com sucesso!')
+                return redirect('Auth:lista_indices')
+            except Exception as e:
+                messages.error(request, f'Erro ao salvar índice: {str(e)}')
+        else:
+            messages.error(request, 'Por favor, corrija os erros no formulário.')
     else:
         form = IndiceForm()
     context = {'form': form,'titulo': 'Adicionar Novo Índice'}
@@ -36,12 +43,17 @@ def editar_indice(request, id_unico):
     if request.method == 'POST':
         form = IndiceForm(request.POST, instance=indice)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Índice atualizado com sucesso!')
-            return redirect('Auth:lista_indices')
+            try:
+                form.save()
+                messages.success(request, 'Índice atualizado com sucesso!')
+                return redirect('Auth:lista_indices')
+            except Exception as e:
+                messages.error(request, f'Erro ao atualizar índice: {str(e)}')
+        else:
+            messages.error(request, 'Por favor, corrija os erros no formulário.')
     else:
         form = IndiceForm(instance=indice)
-    context = {'form': form,'titulo': f'Editando Índice: {indice.tipo_indice.descricao} ({indice.mes}/{indice.ano})'}
+    context = {'form': form,'titulo': f'Editando Índice: {indice.tipo_indice.nome_tipo_indice} ({indice.mes}/{indice.ano})'}
     return render(request, 'indices/formulario.html', context)
 
 

@@ -1,7 +1,7 @@
 # ===============================================
 # ==            CRUD PARA AÇÕES              ==
 # ===============================================
-from pyexpat.errors import messages
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -21,13 +21,13 @@ def lista_acoes(request):
 def adicionar_acao(request):
     """ Processa o formulário para adicionar uma nova Ação. """
     if request.method == 'POST':
-        form = AcaoForm(request.POST)
+        form = AcaoForm(request.POST, request=request)
         if form.is_valid():
             form.save()
             messages.success(request, 'Ação cadastrada com sucesso!')
             return redirect('Auth:lista_acoes') 
     else:
-        form = AcaoForm()
+        form = AcaoForm(request=request)
     tipos_acao_json = list(TipoAcao.objects.values('id', 'mensagem_padrao_avaliacao', 'mensagem_padrao_conclusao'))
 
     context = {'form': form,'tipos_acao_json': tipos_acao_json, 'titulo': 'Adicionar Nova Ação'}
@@ -41,13 +41,13 @@ def editar_acao(request, id_unico):
     if acao.usuario != request.user:
         return HttpResponseForbidden("Você não tem permissão para editar esta ação.")
     if request.method == 'POST':
-        form = AcaoForm(request.POST, instance=acao)
+        form = AcaoForm(request.POST, instance=acao, request=request)
         if form.is_valid():
             form.save()
             messages.success(request, 'Ação atualizada com sucesso!')
             return redirect('Auth:lista_acoes')
     else:
-        form = AcaoForm(instance=acao)
+        form = AcaoForm(instance=acao, request=request)
         
     # LINHA MODIFICADA: Prepara os dados para o JSON
     tipos_acao_json = list(TipoAcao.objects.values('id', 'mensagem_padrao_avaliacao', 'mensagem_padrao_conclusao'))

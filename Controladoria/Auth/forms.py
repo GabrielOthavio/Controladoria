@@ -38,16 +38,33 @@ class CustomUserCreationForm(UserCreationForm):
             'username', 'first_name', 'last_name', 'email', 'cpf', 'telefone',
             'rua', 'bairro', 'numero', 'cep', 'perfil'
         )
-class CustomUserChangeForm(UserChangeForm):
+class UsuarioForm(forms.ModelForm):
     """
-    Formulário para editar usuários existentes, baseado no modelo customizado.
+    Formulário para criar e editar usuários.
     """
     class Meta:
         model = Usuario
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'cpf', 'telefone',
-            'rua', 'bairro', 'numero', 'cep', 'perfil', 'is_active', 'is_staff'
-        )
+        fields = [
+            'username', 'first_name', 'last_name', 'email', 'cpf', 'telefone',
+            'rua', 'bairro', 'numero', 'cep', 'perfil'
+        ]
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'cpf': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefone': forms.TextInput(attrs={'class': 'form-control'}),
+            'rua': forms.TextInput(attrs={'class': 'form-control'}),
+            'bairro': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero': forms.TextInput(attrs={'class': 'form-control'}),
+            'cep': forms.TextInput(attrs={'class': 'form-control'}),
+            'perfil': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+    def clean_cpf(self):
+        data = self.cleaned_data.get('cpf', '')
+        return bleach.clean(data, tags=[], strip=True)
 class TipoAcaoForm(forms.ModelForm):
     class Meta:
         model = TipoAcao
@@ -79,28 +96,44 @@ class AcaoForm(forms.ModelForm):
         fields = ['data_execucao', 'tipo_acao', 'numero_acao', 'avaliacao', 'conclusao']
         widgets = {
             'tipo_acao': forms.Select(attrs={'class': 'form-select'}),
+            'numero_acao': forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'avaliacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'conclusao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)  # Extrai o request dos kwargs
         super().__init__(*args, **kwargs)
         self.fields['numero_acao'].required = False
         self.fields['numero_acao'].widget.attrs['readonly'] = True
-        self.fields['numero_acao'].widget.attrs['class'] = 'form-control'
+        
+        # Para novas instâncias, define o usuário automaticamente
+        if not self.instance.pk and self.request and self.request.user:
+            self.instance.usuario = self.request.user
 
     def save(self, commit=True):
-        instance = super().save(commit=commit)
-
-        if not instance.numero_acao:
-            instance.numero_acao = instance.id
-            if commit:
+        instance = super().save(commit=False)  # Não salva ainda
+        
+        if commit:
+            instance.save()
+            
+            # Define numero_acao após salvar se não estiver definido
+            if not instance.numero_acao:
+                instance.numero_acao = instance.id
                 instance.save(update_fields=['numero_acao'])
+        
         return instance
 class IndiceForm(forms.ModelForm):
     class Meta:
         model = Indice
-        fields = ['tipo_indice', 'mes', 'ano', 'observacao']
+        fields = ['tipo_indice', 'mes', 'ano', 'valor', 'observacao']
+        widgets = {
+            'tipo_indice': forms.Select(attrs={'class': 'form-control'}),
+            'mes': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '12'}),
+            'ano': forms.NumberInput(attrs={'class': 'form-control', 'min': '2000'}),
+            'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
 
     def clean_observacao(self):
         data = self.cleaned_data['observacao']
