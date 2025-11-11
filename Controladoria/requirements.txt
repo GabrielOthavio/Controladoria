@@ -23,3 +23,16 @@ cryptography==46.0.3
 # webencodings==0.5.1
 # cffi>=2.0.0
 # pycparser
+
+# NUNCA envie este arquivo para o controle de versão (adicione ao .gitignore)
+SECRET_KEY='***REMOVED***'
+ALLOWED_HOSTS=127.0.0.1,localhost
+FIELD_ENCRYPTION_KEY='***REMOVED***'
+DEBUG=True
+
+# Credenciais do Banco de Dados
+DB_NAME=controladoria_db
+DB_USER=aluno
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=5432
