@@ -63,7 +63,7 @@ class Indice(models.Model):
     tipo_indice = models.ForeignKey(TipoIndice, on_delete=models.PROTECT, verbose_name="Tipo de Índice")
     mes = models.IntegerField(verbose_name="Mês", validators=[MinValueValidator(1), MaxValueValidator(12)])
     ano = models.IntegerField(verbose_name="Ano", validators=[MinValueValidator(2000), MaxValueValidator(datetime.date.today().year + 5)])
-    valor = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    valor = models.DecimalField(max_digits=12, decimal_places=5, blank=True, null=True)
     observacao = models.TextField(blank=True, null=True)
     class Meta:
         unique_together = ('tipo_indice', 'mes', 'ano')

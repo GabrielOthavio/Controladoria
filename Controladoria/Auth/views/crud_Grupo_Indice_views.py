@@ -33,7 +33,6 @@ def adicionar_grupo_indice(request):
         form = GrupoIndiceForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Grupo de Índice adicionado com sucesso!')
             return redirect('Auth:lista_grupos_indice')
     else:
         form = GrupoIndiceForm()
@@ -52,7 +51,6 @@ def editar_grupo_indice(request, id_unico):
         form = GrupoIndiceForm(request.POST, instance=grupo)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Grupo de Índice atualizado com sucesso!')
             return redirect('Auth:lista_grupos_indice')
     else:
         form = GrupoIndiceForm(instance=grupo)
