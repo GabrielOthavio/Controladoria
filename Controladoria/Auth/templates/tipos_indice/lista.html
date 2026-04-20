@@ -25,7 +25,7 @@
                     <tbody>
                         {% for tipo in tipos_indice %}
                         <tr>
-                            <td>{{ tipo.descricao }}</td>
+                            <td>{{ tipo.nome_tipo_indice }}</td>
                             <td>{{ tipo.indice_grupo|default:"-" }}</td>
                             <td class="text-end">
                                 <a href="{% url 'Auth:editar_tipo_indice' id_unico=tipo.id_unico %}" class="btn btn-sm btn-outline-secondary me-2">

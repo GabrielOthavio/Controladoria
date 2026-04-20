@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Confirmar Exclusão de Índice{% endblock %}
+{% block title %}Confirmar Exclusão{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -11,9 +11,9 @@
                     <h2 class="h5 mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar Exclusão</h2>
                 </div>
                 <div class="card-body">
-                    <p class="lead">Você tem certeza que deseja excluir o Índice permanentemente?</p>
+                    <p class="lead">Você tem certeza que deseja excluir o Grupo de Índice permanentemente?</p>
                     <div class="alert alert-secondary">
-                        <strong>{{ objeto.tipo_indice.descricao }} - {{ objeto.mes }}/{{ objeto.ano }}</strong>
+                        <strong>Nome do Grupo:</strong> {{ objeto.nome }}
                     </div>
                     <p class="text-danger mt-3"><strong>Atenção:</strong> Esta ação não poderá ser desfeita.</p>
 
@@ -21,7 +21,9 @@
                         {% csrf_token %}
                         <div class="mt-4 border-top pt-3">
                             <button type="submit" class="btn btn-danger">Sim, excluir</button>
-                            <a href="{% url 'Auth:lista_indices' %}" class="btn btn-secondary">Cancelar</a>
+                            <a href="{% url 'Auth:lista_indices'%}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
                         </div>
                     </form>
                 </div>

@@ -25,12 +25,12 @@
                         {% for grupos in grupos_indice %}   
                         <tr>
                             <td>{{ grupos.nome_grupo }}</td>
-                            <td>{{ grupos.descricao|truncatewords:20 }}</td>
+                            <td>{{ grupos.observacao|truncatewords:20 }}</td>
                             <td class="text-end">
-                                <a href="#" class="btn btn-sm btn-outline-secondary me-2">
+                                <a href="{% url 'Auth:editar_grupo_indice' id_unico=grupos.id_unico %}" class="btn btn-sm btn-outline-secondary me-2">
                                     <i class="bi bi-pencil-fill"></i> Editar
                                 </a>
-                                <a href="#" class="btn btn-sm btn-outline-danger">
+                                <a href="{% url 'Auth:excluir_grupo_indice' id_unico=grupos.id_unico %}" class="btn btn-sm btn-outline-danger">
                                     <i class="bi bi-trash-fill"></i> Excluir
                                 </a>
                             </td>

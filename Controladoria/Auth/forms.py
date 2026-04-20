@@ -111,10 +111,10 @@ ALLOWED_TAGS = ['b', 'i', 'u', 'p', 'br', 'strong', 'em', 'li', 'ul', 'ol']
 class TipoIndiceForm(forms.ModelForm):
     class Meta:
         model = TipoIndice
-        fields = ['descricao', 'indice_grupo', 'observacao']
+        fields = ['nome_tipo_indice', 'indice_grupo', 'observacao']
         # Esta seção garante que os campos tenham a classe 'form-control' do Bootstrap
         widgets = {
-            'descricao': forms.TextInput(attrs={'class': 'form-control'}),
+            'nome_tipo_indice': forms.TextInput(attrs={'class': 'form-control'}),
             'indice_grupo': forms.TextInput(attrs={'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
@@ -187,9 +187,9 @@ class GrupoIndiceForm(forms.ModelForm):
     """
     class Meta:
         model = GrupoIndice
-        fields = ['nome', 'observacao']
+        fields = ['nome_grupo', 'observacao']
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'nome_grupo': forms.TextInput(attrs={'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
 

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>{{ titulo }}</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{% url 'Auth:lista_acoes' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Coleta os dados que o Django enviou do backend.
+    {{ tipos_acao.values 'id', 'mensagem_padrao_avaliacao', 'mensagem_padrao_conclusao'|json_script:"tipos-acao-data" }}
+    const tiposAcaoData = JSON.parse(document.getElementById('tipos-acao-data').textContent);
+
+    // 2. Mapeia os dados para um formato mais fácil de usar (ID -> objeto).
+    const tiposAcaoMap = {};
+    tiposAcaoData.forEach(item => {
+        tiposAcaoMap[item.id] = item;
+    });
+
+    // 3. Pega os elementos do formulário do DOM.
+    const tipoAcaoSelect = document.getElementById('id_tipo_acao');
+    const avaliacaoTextarea = document.getElementById('id_avaliacao');
+    const conclusaoTextarea = document.getElementById('id_conclusao');
+
+    // 4. Adiciona um "escutador" que dispara uma função sempre que o select for alterado.
+    tipoAcaoSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+
+        if (selectedId && tiposAcaoMap[selectedId]) {
+            const data = tiposAcaoMap[selectedId];
+            avaliacaoTextarea.value = data.mensagem_padrao_avaliacao || '';
+            conclusaoTextarea.value = data.mensagem_padrao_conclusao || '';
+        } else {
+            avaliacaoTextarea.value = '';
+            conclusaoTextarea.value = '';
+        }
+    });
+</script>
+{% endblock %}

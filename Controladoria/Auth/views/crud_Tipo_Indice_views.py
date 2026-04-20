@@ -15,7 +15,7 @@ def lista_tipos_indice(request):
     """
     Exibe uma lista de todos os Tipos de Índice cadastrados.
     """
-    tipos_indice = TipoIndice.objects.all().order_by('descricao')
+    tipos_indice = TipoIndice.objects.all().order_by('nome_tipo_indice')
     context = {'tipos_indice': tipos_indice}
     return render(request, 'tipos_indice/lista.html', context)
 
@@ -33,26 +33,22 @@ def adicionar_tipo_indice(request):
             return redirect('Auth:lista_tipos_indice')
     else:
         form = TipoIndiceForm()
-    context = {'form': form,'titulo': 'Adicionar Tipo de Índice'}
+    tipos_indice_data = list(TipoIndice.objects.values('id', 'indice_grupo__id_unico'))
+    context = {'form': form,'titulo': 'Adicionar Tipo de Índice','todos_tipos_indice': tipos_indice_data}
     return render(request, 'tipos_indice/formulario.html', context)
-
 
 @login_required(login_url='Auth:login')
 @user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
 def editar_tipo_indice(request, id_unico):
-    """
-    Processa o formulário para editar um Tipo de Índice existente.
-    """
     tipo_indice = get_object_or_404(TipoIndice, id_unico=id_unico)
     if request.method == 'POST':
         form = TipoIndiceForm(request.POST, instance=tipo_indice)
         if form.is_valid():
             form.save()
-            # messages.success(request, 'Tipo de Índice atualizado com sucesso!')
             return redirect('Auth:lista_tipos_indice')
     else:
         form = TipoIndiceForm(instance=tipo_indice)
-    context = {'form': form,'titulo': f'Editando "{tipo_indice.descricao}"'}
+    context = {'form': form,'titulo': f'Editando "{tipo_indice.nome_tipo_indice}"'}
     return render(request, 'tipos_indice/formulario.html', context)
 
 @login_required(login_url='Auth:login')

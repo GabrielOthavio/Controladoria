@@ -13,7 +13,7 @@
                 <div class="card-body">
                     <p class="lead">Você tem certeza que deseja excluir o Grupo de Índice permanentemente?</p>
                     <div class="alert alert-secondary">
-                        <strong>{{ objeto.nome_grupo }}</strong>
+                        <strong>Nome do Grupo:</strong> {{ objeto.nome_grupo }}
                     </div>
                     <p class="text-danger mt-3"><strong>Atenção:</strong> Esta ação não poderá ser desfeita.</p>
 
@@ -21,7 +21,7 @@
                         {% csrf_token %}
                         <div class="mt-4 border-top pt-3">
                             <button type="submit" class="btn btn-danger">Sim, excluir</button>
-                            <a href="#" class="btn btn-secondary">
+                            <a href="{% url 'Auth:lista_grupos_indice'%}" class="btn btn-secondary">
                                 Cancelar
                             </a>
                         </div>
