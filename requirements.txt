@@ -1,0 +1,38 @@
+# Dependências do Sistema de Controladoria
+# Gerado em: 11/11/2025
+
+# Framework Web
+Django==5.2.8
+
+# Banco de Dados PostgreSQL
+psycopg2-binary==2.9.11
+
+# Gerenciamento de Variáveis de Ambiente
+python-dotenv==1.2.1
+
+# Segurança e Sanitização
+bleach==6.3.0
+
+# Criptografia de Campos
+django-encrypted-model-fields==0.6.5
+cryptography==46.0.3
+
+# Dependências Transitivas (instaladas automaticamente)
+# asgiref==3.10.0
+# sqlparse==0.5.3
+# webencodings==0.5.1
+# cffi>=2.0.0
+# pycparser
+
+# NUNCA envie este arquivo para o controle de versão (adicione ao .gitignore)
+SECRET_KEY='***REMOVED***'
+ALLOWED_HOSTS=127.0.0.1,localhost
+FIELD_ENCRYPTION_KEY='***REMOVED***'
+DEBUG=True
+
+# Credenciais do Banco de Dados
+DB_NAME=controladoria_db
+DB_USER=aluno
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=5432
