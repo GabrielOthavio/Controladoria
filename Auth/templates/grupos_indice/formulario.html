@@ -1,0 +1,48 @@
+{% extends '_base_app.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_grupos_indice' %}">Grupos de Índice</a>
+<span class="sep">/</span>
+<span class="current">{{ titulo }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1 class="page-title">{{ titulo }}</h1></div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div style="background:oklch(0.55 0.18 25/0.12);border:1px solid oklch(0.55 0.18 25/0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--danger);margin-bottom:var(--density-gap);">
+    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Informações</span></div>
+    <div class="card-body">
+      {% for field in form %}
+      <div class="form-group{% if field.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ field.id_for_label }}">
+          {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.errors %}<div class="invalid-feedback">{% for e in field.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <a href="{% url 'Auth:lista_grupos_indice' %}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg"></i> Salvar
+    </button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends '_base_app.html' %}
+
+{% block title %}Grupos de Índice{% endblock %}
+
+{% block breadcrumb_trail %}
+<span class="current">Grupos de Índice</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Grupos de Índice</h1>
+    <p class="page-subtitle">{{ grupos_indice|length }} grupo{% if grupos_indice|length != 1 %}s{% endif %} cadastrado{% if grupos_indice|length != 1 %}s{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'Auth:adicionar_grupo_indice' %}" class="btn btn-primary" data-shortcut-new>
+      <i class="bi bi-plus"></i> Novo Grupo
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome do Grupo</th>
+          <th>Observação</th>
+          <th class="col-actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for grupo in grupos_indice %}
+        <tr>
+          <td><span class="cell-primary">{{ grupo.nome }}</span></td>
+          <td><span class="truncate">{{ grupo.observacao|default:"—" }}</span></td>
+          <td class="col-actions">
+            <a href="{% url 'Auth:editar_grupo_indice' id_unico=grupo.id_unico %}" class="btn btn-ghost btn-sm">
+              <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'Auth:excluir_grupo_indice' id_unico=grupo.id_unico %}" class="btn btn-ghost btn-sm text-danger">
+              <i class="bi bi-trash"></i> Excluir
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="bi bi-collection"></i></div>
+              <p class="empty-title">Nenhum grupo de índice cadastrado</p>
+              <p class="empty-msg">Grupos organizam os tipos de índice por categoria.</p>
+              <a href="{% url 'Auth:adicionar_grupo_indice' %}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Novo Grupo
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends '_base_app.html' %}
+
+{% block title %}Confirmar Exclusão de Etapa{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_auditorias' %}">Auditorias</a>
+<span class="sep">/</span>
+<a href="{% url 'Auth:gerenciar_auditoria' id_unico=auditoria.id_unico %}">{{ auditoria.nome_auditoria }}</a>
+<span class="sep">/</span>
+<span class="current">Excluir Etapa</span>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-overlay">
+  <div class="confirm-dialog card">
+    <div class="confirm-header">
+      <i class="bi bi-trash confirm-icon"></i>
+      <h2 class="confirm-title">Confirmar Exclusão</h2>
+    </div>
+    <div class="confirm-body">
+      <p>Tem certeza que deseja excluir permanentemente esta etapa e todos os achados vinculados?</p>
+      <p class="confirm-subject">{{ etapa.atividade }}</p>
+    </div>
+    <div class="confirm-actions">
+      <a href="{% url 'Auth:gerenciar_auditoria' id_unico=auditoria.id_unico %}" class="btn btn-ghost">Cancelar</a>
+      <form method="post" style="display:inline;margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash"></i> Excluir
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends '_base_app.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_indices' %}">Índices</a>
+<span class="sep">/</span>
+<span class="current">{{ titulo }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ titulo }}</h1>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div style="background:oklch(0.55 0.18 25/0.12);border:1px solid oklch(0.55 0.18 25/0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--danger);margin-bottom:var(--density-gap);">
+    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Identificação</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group{% if form.tipo_indice.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.tipo_indice.id_for_label }}">
+          Tipo de Índice<span class="req">*</span>
+        </label>
+        {{ form.tipo_indice }}
+        {% if form.tipo_indice.errors %}<div class="invalid-feedback">{% for e in form.tipo_indice.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group{% if form.mes.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.mes.id_for_label }}">
+            Mês<span class="req">*</span>
+          </label>
+          {{ form.mes }}
+          {% if form.mes.errors %}<div class="invalid-feedback">{% for e in form.mes.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group{% if form.ano.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.ano.id_for_label }}">
+            Ano<span class="req">*</span>
+          </label>
+          {{ form.ano }}
+          {% if form.ano.errors %}<div class="invalid-feedback">{% for e in form.ano.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-group{% if form.valor.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.valor.id_for_label }}">
+          Valor (%)<span class="req">*</span>
+        </label>
+        {{ form.valor }}
+        {% if form.valor.errors %}<div class="invalid-feedback">{% for e in form.valor.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Observações</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group{% if form.observacao.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.observacao.id_for_label }}">Observação</label>
+        {{ form.observacao }}
+        {% if form.observacao.errors %}<div class="invalid-feedback">{% for e in form.observacao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <a href="{% url 'Auth:lista_indices' %}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg"></i> Salvar
+    </button>
+  </div>
+</form>
+{% endblock %}

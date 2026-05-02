@@ -1,0 +1,120 @@
+{% extends '_base_app.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_matrizes' %}">Matrizes de Auditoria</a>
+<span class="sep">/</span>
+<span class="current">{{ titulo }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ titulo }}</h1>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div style="background:oklch(0.55 0.18 25/0.12);border:1px solid oklch(0.55 0.18 25/0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--danger);margin-bottom:var(--density-gap);">
+    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Descrição e Objetivo (linha inteira) -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Identificação</span></div>
+    <div class="card-body">
+      <div class="form-group{% if form.descricao.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.descricao.id_for_label }}">
+          Descrição / Nome<span class="req">*</span>
+        </label>
+        {{ form.descricao }}
+        {% if form.descricao.errors %}<div class="invalid-feedback">{% for e in form.descricao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group{% if form.entidade.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.entidade.id_for_label }}">Entidade</label>
+          {{ form.entidade }}
+          {% if form.entidade.errors %}<div class="invalid-feedback">{% for e in form.entidade.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+        <div></div>
+      </div>
+      <div class="form-group{% if form.objetivo.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.objetivo.id_for_label }}">
+          Objetivo<span class="req">*</span>
+        </label>
+        {{ form.objetivo }}
+        {% if form.objetivo.errors %}<div class="invalid-feedback">{% for e in form.objetivo.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Parâmetros: 2 colunas -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Parâmetros</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group{% if form.base_legal.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.base_legal.id_for_label }}">
+            Base Legal<span class="req">*</span>
+          </label>
+          {{ form.base_legal }}
+          {% if form.base_legal.errors %}<div class="invalid-feedback">{% for e in form.base_legal.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group{% if form.riscos.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.riscos.id_for_label }}">
+            Riscos<span class="req">*</span>
+          </label>
+          {{ form.riscos }}
+          {% if form.riscos.errors %}<div class="invalid-feedback">{% for e in form.riscos.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group{% if form.criterios_indicadores.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.criterios_indicadores.id_for_label }}">
+            Critérios Indicadores<span class="req">*</span>
+          </label>
+          {{ form.criterios_indicadores }}
+          {% if form.criterios_indicadores.errors %}<div class="invalid-feedback">{% for e in form.criterios_indicadores.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group{% if form.procedimentos.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.procedimentos.id_for_label }}">
+            Procedimentos<span class="req">*</span>
+          </label>
+          {{ form.procedimentos }}
+          {% if form.procedimentos.errors %}<div class="invalid-feedback">{% for e in form.procedimentos.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-group{% if form.conclusoes_esperadas.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.conclusoes_esperadas.id_for_label }}">
+          Conclusões Esperadas<span class="req">*</span>
+        </label>
+        {{ form.conclusoes_esperadas }}
+        {% if form.conclusoes_esperadas.errors %}<div class="invalid-feedback">{% for e in form.conclusoes_esperadas.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Observações</span></div>
+    <div class="card-body">
+      <div class="form-group{% if form.observacoes.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações Adicionais</label>
+        {{ form.observacoes }}
+        {% if form.observacoes.errors %}<div class="invalid-feedback">{% for e in form.observacoes.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <a href="{% url 'Auth:lista_matrizes' %}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg"></i> Salvar
+    </button>
+  </div>
+</form>
+{% endblock %}

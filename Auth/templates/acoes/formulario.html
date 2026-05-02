@@ -1,0 +1,85 @@
+{% extends '_base_app.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_acoes' %}">Ações</a>
+<span class="sep">/</span>
+<span class="current">{{ titulo }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ titulo }}</h1>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div style="background:oklch(0.55 0.18 25/0.12);border:1px solid oklch(0.55 0.18 25/0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--danger);margin-bottom:var(--density-gap);">
+    {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Identificação</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group{% if form.tipo_acao.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.tipo_acao.id_for_label }}">
+          Tipo de Ação<span class="req">*</span>
+        </label>
+        {{ form.tipo_acao }}
+        {% if form.tipo_acao.errors %}<div class="invalid-feedback">{% for e in form.tipo_acao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+      <div class="form-group{% if form.data_execucao.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.data_execucao.id_for_label }}">
+          Data de Execução<span class="req">*</span>
+        </label>
+        {{ form.data_execucao }}
+        {% if form.data_execucao.errors %}<div class="invalid-feedback">{% for e in form.data_execucao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Conteúdo</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group{% if form.avaliacao.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.avaliacao.id_for_label }}">
+          Avaliação<span class="req">*</span>
+        </label>
+        {{ form.avaliacao }}
+        {% if form.avaliacao.errors %}<div class="invalid-feedback">{% for e in form.avaliacao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+      <div class="form-group{% if form.conclusao.errors %} field-error{% endif %}">
+        <label class="form-label" for="{{ form.conclusao.id_for_label }}">
+          Conclusão<span class="req">*</span>
+        </label>
+        {{ form.conclusao }}
+        {% if form.conclusao.errors %}<div class="invalid-feedback">{% for e in form.conclusao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <a href="{% url 'Auth:lista_acoes' %}" class="btn btn-ghost">Cancelar</a>
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check-lg"></i> Salvar
+    </button>
+  </div>
+</form>
+
+{{ tipos_acao_json|json_script:"tipos-acao-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'Auth/js/form_acao.js' %}"></script>
+{% endblock %}

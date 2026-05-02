@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py makemigrations)",
+      "Bash(python manage.py migrate)",
+      "Bash(python -c ' *)",
+      "PowerShell(cmd /c \"dir /AL \"\"C:\\\\Users\\\\gabri\\\\OneDrive\\\\Ambiente de Trabalho\\\\Controladoria\"\"\")",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\gabri\\\\OneDrive\\\\Ambiente de Trabalho\\\\Controladoria\\\\Controladoria\\\\manage.py\" -ErrorAction SilentlyContinue; Write-Host \"Exit: $LASTEXITCODE\")",
+      "PowerShell(cmd /c \"rmdir /S /Q \"\"C:\\\\Users\\\\gabri\\\\OneDrive\\\\Ambiente de Trabalho\\\\Controladoria\\\\Controladoria\"\"\")",
+      "Bash(python manage.py makemigrations Auth)",
+      "Bash(python manage.py dbshell -- -c \"\\\\dt auth_*\")",
+      "Bash(python -c \"import django, os; os.environ.setdefault\\('DJANGO_SETTINGS_MODULE','config.settings'\\); django.setup\\(\\); from Auth.models import HistoricoAlteracoes; print\\(HistoricoAlteracoes._meta.db_table\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\gabri\\.claude\\projects\\c--Users-gabri-OneDrive-Ambiente-de-Trabalho-Nova-pasta--2--Controladoria\\memory"
+    ]
+  }
+}

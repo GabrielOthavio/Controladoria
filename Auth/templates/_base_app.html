@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Controladoria{% endblock %} — Sistema de Auditoria</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="{% static 'Auth/css/design-system.css' %}">
+<script>
+(function(){
+  try {
+    var t = JSON.parse(localStorage.getItem('app_tweaks')||'{}');
+    document.documentElement.setAttribute('data-theme',   t.theme   || 'dark');
+    document.documentElement.setAttribute('data-density', t.density || 'compact');
+    if (t.accentH) document.documentElement.style.setProperty('--accent-h', t.accentH);
+  } catch(e){}
+})();
+</script>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Django messages as hidden spans — converted to toasts by app.js -->
+{% for msg in messages %}
+<span data-django-message="{{ msg.tags }}" style="display:none">{{ msg }}</span>
+{% endfor %}
+
+<!-- Toast container -->
+<div class="toast-stack" id="toast-stack"></div>
+
+<div class="shell">
+
+  <!-- ===== Sidebar ===== -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="logo-mark">C</div>
+      <span class="logo-text">Controladoria</span>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Principal</div>
+      <a href="{% url 'Auth:dashboard' %}" class="nav-item" data-nav-path="{% url 'Auth:dashboard' %}" data-nav-exact="1" data-nav-key="dashboard">
+        <i class="bi bi-speedometer2"></i>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="{% url 'Auth:lista_auditorias' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_auditorias' %}" data-nav-key="auditorias">
+        <i class="bi bi-clipboard-check"></i>
+        <span class="nav-label">Auditorias</span>
+      </a>
+      <a href="{% url 'Auth:lista_acoes' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_acoes' %}" data-nav-key="acoes">
+        <i class="bi bi-lightning-charge"></i>
+        <span class="nav-label">Ações</span>
+      </a>
+      <a href="{% url 'Auth:lista_indices' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_indices' %}" data-nav-key="indices">
+        <i class="bi bi-graph-up"></i>
+        <span class="nav-label">Índices</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Configuração</div>
+      <a href="{% url 'Auth:lista_tipos_acao' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_tipos_acao' %}" data-nav-key="tipos_acao">
+        <i class="bi bi-tag"></i>
+        <span class="nav-label">Tipos de Ação</span>
+      </a>
+      <a href="{% url 'Auth:lista_tipos_indice' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_tipos_indice' %}" data-nav-key="tipos_indice">
+        <i class="bi bi-layers"></i>
+        <span class="nav-label">Tipos de Índice</span>
+      </a>
+      <a href="{% url 'Auth:lista_grupos_indice' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_grupos_indice' %}" data-nav-key="grupos_indice">
+        <i class="bi bi-collection"></i>
+        <span class="nav-label">Grupos</span>
+      </a>
+      <a href="{% url 'Auth:lista_matrizes' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_matrizes' %}" data-nav-key="matrizes">
+        <i class="bi bi-journal-check"></i>
+        <span class="nav-label">Matrizes de Auditoria</span>
+      </a>
+      <a href="{% url 'Auth:lista_entidades' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_entidades' %}" data-nav-key="entidades">
+        <i class="bi bi-building"></i>
+        <span class="nav-label">Entidades</span>
+      </a>
+      {% if request.user.perfil == 'CHEFE' %}
+      <a href="{% url 'Auth:lista_usuarios' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_usuarios' %}" data-nav-key="usuarios">
+        <i class="bi bi-people"></i>
+        <span class="nav-label">Usuários</span>
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="sidebar-foot">
+      <button class="nav-item" id="sidebar-toggle" title="Recolher">
+        <i class="bi bi-arrow-bar-left" id="sidebar-toggle-icon"></i>
+        <span class="nav-label">Recolher</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== Main column ===== -->
+  <div class="main-col">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <nav class="breadcrumb">
+        <a href="{% url 'Auth:dashboard' %}">Controladoria</a>
+        <span class="sep">/</span>
+        {% block breadcrumb_trail %}<span class="current">—</span>{% endblock %}
+      </nav>
+
+      <span class="topbar-user">{{ request.user.get_full_name|default:request.user.username }}</span>
+
+      <!-- Tweaks -->
+      <div class="tweaks-container">
+        <button class="tweaks-btn" id="tweaks-btn" title="Aparência">
+          <i class="bi bi-sliders"></i>
+        </button>
+        <div class="tweaks-dropdown" id="tweaks-dropdown">
+          <div class="tweaks-section">
+            <div class="tweaks-label">Tema</div>
+            <div class="tweaks-row">
+              <button class="tweaks-opt" data-theme-opt="light">Claro</button>
+              <button class="tweaks-opt" data-theme-opt="dark">Escuro</button>
+            </div>
+          </div>
+          <div class="tweaks-section">
+            <div class="tweaks-label">Densidade</div>
+            <div class="tweaks-row">
+              <button class="tweaks-opt" data-density-opt="compact">Compacto</button>
+              <button class="tweaks-opt" data-density-opt="comfortable">Normal</button>
+              <button class="tweaks-opt" data-density-opt="spacious">Amplo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <form method="post" action="{% url 'Auth:logout' %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm">
+          <i class="bi bi-box-arrow-right"></i> Sair
+        </button>
+      </form>
+    </header>
+
+    <!-- Page content -->
+    <main class="page">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div><!-- /.main-col -->
+</div><!-- /.shell -->
+
+<script src="{% static 'Auth/js/app.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

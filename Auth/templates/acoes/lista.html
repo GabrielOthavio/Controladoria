@@ -1,0 +1,70 @@
+{% extends '_base_app.html' %}
+
+{% block title %}Ações{% endblock %}
+
+{% block breadcrumb_trail %}
+<span class="current">Ações</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Ações</h1>
+    <p class="page-subtitle">{{ acoes|length }} registro{% if acoes|length != 1 %}s{% endif %} cadastrado{% if acoes|length != 1 %}s{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'Auth:adicionar_acao' %}" class="btn btn-primary" data-shortcut-new>
+      <i class="bi bi-plus"></i> Nova Ação
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Identificação</th>
+          <th>Tipo de Ação</th>
+          <th>Data de Execução</th>
+          <th>Responsável</th>
+          <th class="col-actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for acao in acoes %}
+        <tr>
+          <td>
+            <span class="cell-primary">{{ acao.identificacao_semantica }}</span>
+          </td>
+          <td>{{ acao.tipo_acao.nome_acao }}</td>
+          <td class="num">{{ acao.data_execucao|date:"d/m/Y" }}</td>
+          <td>{{ acao.usuario.get_full_name|default:acao.usuario.username }}</td>
+          <td class="col-actions">
+            <a href="{% url 'Auth:editar_acao' id_unico=acao.id_unico %}" class="btn btn-ghost btn-sm">
+              <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'Auth:excluir_acao' id_unico=acao.id_unico %}" class="btn btn-ghost btn-sm text-danger">
+              <i class="bi bi-trash"></i> Excluir
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="bi bi-lightning-charge"></i></div>
+              <p class="empty-title">Nenhuma ação cadastrada</p>
+              <p class="empty-msg">Registre a primeira ação para começar.</p>
+              <a href="{% url 'Auth:adicionar_acao' %}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Nova Ação
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends '_base_app.html' %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_indices' %}">Índices</a>
+<span class="sep">/</span>
+<span class="current">Excluir</span>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-overlay">
+  <div class="confirm-dialog card">
+    <div class="confirm-header">
+      <i class="bi bi-trash confirm-icon"></i>
+      <h2 class="confirm-title">Confirmar Exclusão</h2>
+    </div>
+    <div class="confirm-body">
+      <p>Tem certeza que deseja excluir permanentemente o índice abaixo?</p>
+      <p class="confirm-subject">{{ objeto.tipo_indice.descricao }} — {{ objeto.mes|stringformat:"02d" }}/{{ objeto.ano }}</p>
+    </div>
+    <div class="confirm-actions">
+      <a href="{% url 'Auth:lista_indices' %}" class="btn btn-ghost">Cancelar</a>
+      <form method="post" style="display:inline;margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash"></i> Excluir
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

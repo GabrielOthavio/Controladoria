@@ -1,0 +1,252 @@
+{% extends '_base_app.html' %}
+
+{% block title %}Gerenciar — {{ auditoria.nome_auditoria }}{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_auditorias' %}">Auditorias</a>
+<span class="sep">/</span>
+<span class="current">Gerenciar</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ auditoria.nome_auditoria }}</h1>
+    <p class="page-subtitle">
+      {% if auditoria.orgao %}{{ auditoria.orgao }} &mdash; {% endif %}
+      {% if auditoria.status == 'PLANEJADA' %}<span class="badge">Planejada</span>
+      {% elif auditoria.status == 'EM_ANDAMENTO' %}<span class="badge badge-warning">Em Andamento</span>
+      {% elif auditoria.status == 'CONCLUIDA' %}<span class="badge badge-success">Concluída</span>
+      {% elif auditoria.status == 'CANCELADA' %}<span class="badge badge-danger">Cancelada</span>{% endif %}
+    </p>
+  </div>
+  {% if request.user.perfil == 'CHEFE' %}
+  <div class="page-actions">
+    <a href="{% url 'Auth:editar_auditoria' id_unico=auditoria.id_unico %}" class="btn btn-ghost">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Summary bar -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px">
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:4px">Órgão</div>
+      <div style="font-weight:600">{{ auditoria.orgao|default:"—" }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:4px">Responsável do Órgão</div>
+      <div style="font-weight:600">{{ auditoria.responsavel_orgao|default:"—" }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:4px">Início</div>
+      <div style="font-weight:600;font-family:var(--font-mono)">{{ auditoria.data_inicio|date:"d/m/Y"|default:"—" }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:4px">Conclusão</div>
+      <div style="font-weight:600;font-family:var(--font-mono)">{{ auditoria.data_conclusao|date:"d/m/Y"|default:"—" }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:4px">Apuração Inicial</div>
+      <div style="font-weight:600;font-family:var(--font-mono)">{% if auditoria.apuracao_inicial %}R$ {{ auditoria.apuracao_inicial|floatformat:2 }}{% else %}—{% endif %}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:4px">Apuração Final</div>
+      <div style="font-weight:600;font-family:var(--font-mono)">{% if auditoria.apuracao_final %}R$ {{ auditoria.apuracao_final|floatformat:2 }}{% else %}—{% endif %}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div style="display:flex;gap:4px;margin-bottom:0;border-bottom:1px solid var(--border);padding-bottom:0">
+  <a href="?tab=etapas"
+     class="tab-item{% if tab == 'etapas' %} tab-active{% endif %}"
+     style="padding:8px 16px;font-size:13px;font-weight:500;border-radius:var(--radius-sm) var(--radius-sm) 0 0;text-decoration:none;color:{% if tab == 'etapas' %}var(--fg){% else %}var(--fg-muted){% endif %};border-bottom:{% if tab == 'etapas' %}2px solid var(--accent){% else %}none{% endif %}">
+    <i class="bi bi-list-check"></i> Etapas
+    <span style="margin-left:4px;font-size:11px;background:var(--surface-raised);border-radius:10px;padding:1px 7px;font-family:var(--font-mono)">{{ etapas|length }}</span>
+  </a>
+  <a href="?tab=usuarios"
+     class="tab-item{% if tab == 'usuarios' %} tab-active{% endif %}"
+     style="padding:8px 16px;font-size:13px;font-weight:500;border-radius:var(--radius-sm) var(--radius-sm) 0 0;text-decoration:none;color:{% if tab == 'usuarios' %}var(--fg){% else %}var(--fg-muted){% endif %};border-bottom:{% if tab == 'usuarios' %}2px solid var(--accent){% else %}none{% endif %}">
+    <i class="bi bi-people"></i> Usuários
+  </a>
+  <a href="?tab=contato"
+     class="tab-item{% if tab == 'contato' %} tab-active{% endif %}"
+     style="padding:8px 16px;font-size:13px;font-weight:500;border-radius:var(--radius-sm) var(--radius-sm) 0 0;text-decoration:none;color:{% if tab == 'contato' %}var(--fg){% else %}var(--fg-muted){% endif %};border-bottom:{% if tab == 'contato' %}2px solid var(--accent){% else %}none{% endif %}">
+    <i class="bi bi-envelope"></i> Entre em Contato
+  </a>
+</div>
+
+<!-- ── Tab: Etapas ─────────────────────────────────────────────────────────── -->
+{% if tab == 'etapas' %}
+<div class="card" style="border-top-left-radius:0">
+  <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+    <span class="card-title">Etapas da Auditoria</span>
+    {% if request.user.perfil == 'CHEFE' %}
+    <a href="{% url 'Auth:adicionar_etapa' id_unico=auditoria.id_unico %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus"></i> Adicionar Etapa
+    </a>
+    {% endif %}
+  </div>
+  {% if etapas %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:32px">#</th>
+          <th>Atividade</th>
+          <th>Orientação</th>
+          <th>Usuário</th>
+          <th>Prazo</th>
+          <th>Método</th>
+          <th>Situação</th>
+          <th>Achados</th>
+          {% if request.user.perfil == 'CHEFE' %}<th class="col-actions">Ações</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for etapa in etapas %}
+        <tr>
+          <td style="color:var(--fg-subtle);font-family:var(--font-mono);font-size:12px">{{ forloop.counter }}</td>
+          <td><span class="cell-primary">{{ etapa.atividade }}</span></td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg-muted);font-size:12px" title="{{ etapa.orientacao }}">{{ etapa.orientacao }}</td>
+          <td style="font-size:12px;color:var(--fg-muted)">{{ etapa.usuario.get_full_name|default:etapa.usuario.username }}</td>
+          <td class="num" style="font-size:12px;font-family:var(--font-mono)">{{ etapa.prazo|date:"d/m/Y" }}</td>
+          <td style="font-size:12px;color:var(--fg-muted)">{{ etapa.metodo|default:"—" }}</td>
+          <td>
+            {% if etapa.situacao == 'PENDENTE' %}
+              <span class="badge">Pendente</span>
+            {% elif etapa.situacao == 'EM_ANDAMENTO' %}
+              <span class="badge badge-warning">Em Andamento</span>
+            {% elif etapa.situacao == 'CONCLUIDA' %}
+              <span class="badge badge-success">Concluída</span>
+            {% elif etapa.situacao == 'REABERTA' %}
+              <span class="badge" style="background:oklch(0.55 0.18 240/0.15);color:oklch(0.7 0.18 240)">Reaberta</span>
+            {% endif %}
+          </td>
+          <td>
+            {% with count=etapa.achados.count %}
+            {% if count > 0 %}
+              <span class="badge badge-warning">{{ count }}</span>
+            {% else %}
+              <span style="color:var(--fg-subtle)">—</span>
+            {% endif %}
+            {% endwith %}
+          </td>
+          {% if request.user.perfil == 'CHEFE' %}
+          <td class="col-actions">
+            <a href="{% url 'Auth:editar_etapa' id_unico=auditoria.id_unico etapa_id=etapa.id_unico %}" class="btn btn-ghost btn-sm" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            {% if etapa.situacao == 'CONCLUIDA' %}
+            <form method="post" action="{% url 'Auth:reabrir_etapa' id_unico=auditoria.id_unico etapa_id=etapa.id_unico %}" style="display:inline;margin:0">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-ghost btn-sm" title="Reabrir" style="color:oklch(0.7 0.18 240)">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'Auth:excluir_etapa' id_unico=auditoria.id_unico etapa_id=etapa.id_unico %}" class="btn btn-ghost btn-sm text-danger" title="Excluir">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:40px">
+    <div class="empty-icon"><i class="bi bi-list-check"></i></div>
+    <p class="empty-title">Nenhuma etapa cadastrada</p>
+    <p class="empty-msg">Adicione a primeira etapa para começar o acompanhamento.</p>
+    {% if request.user.perfil == 'CHEFE' %}
+    <a href="{% url 'Auth:adicionar_etapa' id_unico=auditoria.id_unico %}" class="btn btn-primary">
+      <i class="bi bi-plus"></i> Adicionar Etapa
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- ── Tab: Usuários ───────────────────────────────────────────────────────── -->
+{% elif tab == 'usuarios' %}
+<div class="card" style="border-top-left-radius:0;border-top-right-radius:0">
+  <div class="card-header"><span class="card-title">Usuários Envolvidos</span></div>
+  {% with usuarios=auditoria.usuarios_envolvidos.all %}
+  {% if usuarios %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Usuário</th>
+          <th>Perfil</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td><span class="cell-primary">{{ u.get_full_name|default:u.username }}</span></td>
+          <td style="font-family:var(--font-mono);font-size:12px;color:var(--fg-muted)">{{ u.username }}</td>
+          <td>
+            {% if u.perfil == 'CHEFE' %}
+              <span class="badge badge-warning">Chefe</span>
+            {% else %}
+              <span class="badge">Funcionário</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="padding:40px">
+    <div class="empty-icon"><i class="bi bi-people"></i></div>
+    <p class="empty-title">Nenhum usuário vinculado</p>
+    <p class="empty-msg">Edite a auditoria para associar usuários envolvidos.</p>
+  </div>
+  {% endif %}
+  {% endwith %}
+</div>
+
+<!-- ── Tab: Entre em Contato ─────────────────────────────────────────────── -->
+{% elif tab == 'contato' %}
+<div class="card" style="border-top-left-radius:0;border-top-right-radius:0">
+  <div class="card-header"><span class="card-title">Entre em Contato</span></div>
+  <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px">
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:6px">Órgão</div>
+      <div style="font-weight:600;font-size:15px">{{ auditoria.orgao|default:"Não informado" }}</div>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:6px">Responsável do Órgão</div>
+      <div style="font-weight:600;font-size:15px">{{ auditoria.responsavel_orgao|default:"Não informado" }}</div>
+    </div>
+    {% if auditoria.matriz and auditoria.matriz.entidade %}
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:6px">Entidade (Matriz)</div>
+      <div style="font-weight:600;font-size:15px">{{ auditoria.matriz.entidade.nome }}</div>
+    </div>
+    {% endif %}
+    {% if auditoria.matriz %}
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:6px">Matriz de Auditoria</div>
+      <div style="font-weight:600;font-size:15px">{{ auditoria.matriz.descricao }}</div>
+    </div>
+    {% endif %}
+    {% if auditoria.informacoes_campos_texto %}
+    <div style="grid-column:1/-1">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);margin-bottom:6px">Informações Adicionais</div>
+      <div style="font-size:13px;color:var(--fg-muted);white-space:pre-wrap">{{ auditoria.informacoes_campos_texto }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
