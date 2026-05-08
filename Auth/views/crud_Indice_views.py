@@ -4,6 +4,8 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from ..forms import IndiceForm
@@ -12,9 +14,26 @@ from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
 def lista_indices(request):
-    """ Exibe uma lista de todos os Índices cadastrados. """
-    indices = Indice.objects.all().order_by('-ano', '-mes') # Mais recentes primeiro
-    context = {'indices': indices}
+    try:
+        per_page = int(request.GET.get('per_page', 16))
+        if per_page not in (8, 16, 32, 64):
+            per_page = 16
+    except (ValueError, TypeError):
+        per_page = 16
+    q = request.GET.get('q', '').strip()
+    qs = Indice.objects.select_related('tipo_indice').order_by('-ano', '-mes')
+    if q:
+        qs = qs.filter(Q(tipo_indice__descricao__icontains=q) | Q(observacao__icontains=q))
+    paginator = Paginator(qs, per_page)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
+    context = {
+        'indices':     page_obj,
+        'page_obj':    page_obj,
+        'paginator':   paginator,
+        'per_page':    per_page,
+        'q':           q,
+        'extra_query': '',
+    }
     return render(request, 'indices/lista.html', context)
 
 @login_required(login_url='Auth:login')

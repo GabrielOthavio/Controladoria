@@ -16,8 +16,13 @@
       <h2 class="confirm-title">Confirmar Exclusão</h2>
     </div>
     <div class="confirm-body">
-      <p>Tem certeza que deseja excluir permanentemente a ação abaixo?</p>
+      <p>Tem certeza que deseja excluir permanentemente a ação abaixo? Esta operação não pode ser desfeita.</p>
       <p class="confirm-subject">{{ objeto.identificacao_semantica }}</p>
+      <div class="confirm-details">
+        <span><i class="bi bi-tag"></i> {{ objeto.tipo_acao.nome_acao }}</span>
+        <span><i class="bi bi-calendar3"></i> {{ objeto.data_execucao|date:"d/m/Y" }}</span>
+        <span><i class="bi bi-person"></i> {{ objeto.usuario.get_full_name|default:objeto.usuario.username }}</span>
+      </div>
     </div>
     <div class="confirm-actions">
       <a href="{% url 'Auth:lista_acoes' %}" class="btn btn-ghost">Cancelar</a>

@@ -36,13 +36,40 @@
         </label>
         {{ form.tipo_acao }}
         {% if form.tipo_acao.errors %}<div class="invalid-feedback">{% for e in form.tipo_acao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        <p class="form-hint"><i class="bi bi-magic"></i> Ao selecionar o tipo, os campos Avaliação e Conclusão serão sugeridos automaticamente.</p>
       </div>
-      <div class="form-group{% if form.data_execucao.errors %} field-error{% endif %}">
-        <label class="form-label" for="{{ form.data_execucao.id_for_label }}">
-          Data de Execução<span class="req">*</span>
-        </label>
-        {{ form.data_execucao }}
-        {% if form.data_execucao.errors %}<div class="invalid-feedback">{% for e in form.data_execucao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--density-gap)">
+        <div class="form-group{% if form.data_execucao.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.data_execucao.id_for_label }}">
+            Data de Execução<span class="req">*</span>
+          </label>
+          {{ form.data_execucao }}
+          {% if form.data_execucao.errors %}<div class="invalid-feedback">{% for e in form.data_execucao.errors %}{{ e }}{% endfor %}</div>{% endif %}
+          {% if form.data_execucao.help_text %}<p class="form-hint">{{ form.data_execucao.help_text }}</p>{% endif %}
+        </div>
+        <div class="form-group{% if form.unidade.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.unidade.id_for_label }}">
+            Unidade<span class="req">*</span>
+          </label>
+          {{ form.unidade }}
+          {% if form.unidade.errors %}<div class="invalid-feedback">{% for e in form.unidade.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:var(--density-gap);align-items:start">
+        <div class="form-group{% if form.status.errors %} field-error{% endif %}">
+          <label class="form-label" for="{{ form.status.id_for_label }}">
+            Status<span class="req">*</span>
+          </label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="invalid-feedback">{% for e in form.status.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
+        <div class="form-group" style="padding-top:28px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
+            {{ form.is_paint }}
+            <span><i class="bi bi-lightning-charge" style="color:var(--accent)"></i> Inclusa no PAINT</span>
+          </label>
+          {% if form.is_paint.errors %}<div class="invalid-feedback">{% for e in form.is_paint.errors %}{{ e }}{% endfor %}</div>{% endif %}
+        </div>
       </div>
     </div>
   </div>

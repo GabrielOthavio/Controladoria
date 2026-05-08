@@ -20,6 +20,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --bg:          oklch(0.99 0.003 240);
   --bg-elev:     oklch(1 0 0);
   --bg-sunken:   oklch(0.975 0.004 240);
@@ -39,6 +40,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg:          oklch(0.17 0.006 260);
   --bg-elev:     oklch(0.21 0.007 260);
   --bg-sunken:   oklch(0.14 0.006 260);
@@ -243,8 +245,8 @@ a { color: inherit; }
 .btn-ghost:hover { background: var(--bg-hover); color: var(--fg); text-decoration: none; }
 .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
 .btn-danger:hover { filter: brightness(1.1); color: #fff; text-decoration: none; }
-.btn-sm { height: 28px; padding: 0 8px; font-size: 12px; }
-.btn-icon { width: 32px; padding: 0; justify-content: center; }
+.btn-sm { height: 30px; padding: 0 10px; font-size: 12px; }
+.btn-icon { width: 34px; padding: 0; justify-content: center; }
 
 /* ===== Badge ===== */
 .badge {
@@ -469,12 +471,62 @@ select[multiple] {
 .confirm-title { font-size: 15px; font-weight: 600; margin: 0; }
 .confirm-body { padding: 20px; }
 .confirm-body p { margin: 0 0 8px; font-size: 13px; color: var(--fg-muted); }
-.confirm-subject { font-weight: 600; font-size: 14px; color: var(--fg); margin: 0; }
+.confirm-subject { font-weight: 600; font-size: 14px; color: var(--fg); margin: 0 0 12px; }
+.confirm-details {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-block-start: 10px;
+  padding: 10px 12px;
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  font-size: 12px; color: var(--fg-muted);
+}
+.confirm-details span { display: flex; align-items: center; gap: 5px; }
 .confirm-actions {
   padding: 14px 20px;
   display: flex; justify-content: flex-end; gap: 8px;
   border-top: 1px solid var(--border);
 }
+
+/* ===== Status Pipeline (Engenharia Cognitiva — Golfo de Avaliação) ===== */
+.status-pipeline {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: 20px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: 12px;
+}
+.pipeline-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  color: var(--fg-subtle);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+.pipeline-step.ps-done   { color: var(--fg-muted); }
+.pipeline-step.ps-active-planejada { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.pipeline-step.ps-active-andamento { background: oklch(0.65 0.15 75 / 0.12); color: var(--warning); font-weight: 600; }
+.pipeline-step.ps-active-concluida { background: oklch(0.55 0.13 155 / 0.12); color: var(--success); font-weight: 600; }
+.pipeline-step.ps-active-cancelada { background: oklch(0.55 0.18 25 / 0.12); color: var(--danger); font-weight: 600; }
+.pipeline-sep {
+  display: flex; align-items: center;
+  color: var(--fg-subtle); font-size: 10px;
+  flex-shrink: 0; padding: 0 2px;
+}
+.pipeline-hint {
+  margin-block-end: 20px;
+  font-size: 12px; color: var(--fg-muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.pipeline-hint a { color: var(--accent); text-decoration: none; }
+.pipeline-hint a:hover { text-decoration: underline; }
 
 /* ===== Tweaks panel ===== */
 .tweaks-container { position: relative; }
@@ -671,6 +723,74 @@ select[multiple] {
 .gap-8  { gap: 8px; }
 .gap-12 { gap: 12px; }
 .mt-gap { margin-top: var(--density-gap); }
+
+/* ===== Filter Tabs ===== */
+.filter-tabs { display: flex; align-items: stretch; gap: 0; }
+.filter-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px; font-weight: 500; color: var(--fg-muted);
+  background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; white-space: nowrap;
+  text-decoration: none;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+  margin-bottom: -1px;
+}
+.filter-tab:hover { color: var(--fg); background: var(--bg-hover); }
+.filter-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.filter-tab .tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 9px; font-size: 11px; font-weight: 600;
+  background: var(--bg-hover); color: var(--fg-muted);
+}
+.filter-tab.active .tab-count { background: var(--accent); color: #fff; }
+
+/* ===== Avatar ===== */
+.avatar-cell { display: flex; align-items: center; gap: 8px; }
+.avatar {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff; letter-spacing: 0;
+}
+
+/* ===== Status Badge ===== */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; white-space: nowrap;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.status-homologada         .status-dot { background: var(--success); }
+.status-concluida          .status-dot { background: var(--success); }
+.status-em_andamento       .status-dot { background: var(--accent); }
+.status-aguardando_revisao .status-dot { background: var(--warning); }
+.status-planejada          .status-dot { background: var(--fg-muted); }
+.status-atrasada           .status-dot { background: var(--danger); }
+.status-cancelada          .status-dot { background: var(--danger); }
+.status-homologada         { color: var(--success); }
+.status-concluida          { color: var(--success); }
+.status-em_andamento       { color: var(--accent); }
+.status-aguardando_revisao { color: var(--warning); }
+.status-planejada          { color: var(--fg-muted); }
+.status-atrasada           { color: var(--danger); }
+.status-cancelada          { color: var(--danger); }
+
+/* ===== Unit Badge ===== */
+.badge-unit {
+  display: inline-block; padding: 1px 6px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
+
+/* ===== PAINT lightning badge ===== */
+.paint-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: color-mix(in oklch, var(--accent) 15%, transparent);
+  color: var(--accent); font-size: 9px; vertical-align: middle; margin-left: 4px;
+}
 
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 8px; height: 8px; }

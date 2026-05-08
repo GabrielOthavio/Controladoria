@@ -170,7 +170,17 @@
         return;
       }
 
-      /* G+D — dashboard, G+A — actions */
+      /* ? — show shortcut hints */
+      if (e.key === '?') {
+        e.preventDefault();
+        showToast(
+          '<strong>Atalhos:</strong> N = novo registro &nbsp;·&nbsp; G+D = dashboard &nbsp;·&nbsp; G+A = ações &nbsp;·&nbsp; G+U = auditorias &nbsp;·&nbsp; G+I = índices',
+          'info'
+        );
+        return;
+      }
+
+      /* G+D, G+A, G+U, G+I — navegação */
       if (e.key === 'g' || e.key === 'G') {
         gPressed = true;
         clearTimeout(gTimer);
@@ -188,7 +198,64 @@
           var acoesLink = document.querySelector('[data-nav-key="acoes"]');
           if (acoesLink) location.href = acoesLink.href;
         }
+        if (e.key === 'u' || e.key === 'U') {
+          var audLink = document.querySelector('[data-nav-key="auditorias"]');
+          if (audLink) location.href = audLink.href;
+        }
+        if (e.key === 'i' || e.key === 'I') {
+          var idxLink = document.querySelector('[data-nav-key="indices"]');
+          if (idxLink) location.href = idxLink.href;
+        }
       }
+    });
+  }
+
+  /* ===== Confirmação de ações destrutivas (Etnometodologia — ação incorreta retorna ao estado anterior) ===== */
+  function initConfirm() {
+    document.querySelectorAll('[data-confirm]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (!window.confirm(el.dataset.confirm)) {
+          e.preventDefault();
+        }
+      });
+    });
+  }
+
+  /* ===== Pagination controls (shared across all list pages) ===== */
+  function initPagination() {
+    /* Page input — navigate on Enter or blur */
+    document.querySelectorAll('.pg-input').forEach(function (inp) {
+      var max = parseInt(inp.dataset.max, 10) || 1;
+
+      function goTo() {
+        var p = parseInt(inp.value, 10);
+        if (isNaN(p) || p < 1) p = 1;
+        if (p > max) p = max;
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', p);
+        window.location.href = url.toString();
+      }
+
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); goTo(); }
+        if (e.key === 'Escape') { inp.value = inp.defaultValue; inp.blur(); }
+      });
+      inp.addEventListener('blur', function () {
+        var p = parseInt(inp.value, 10);
+        if (!isNaN(p) && p >= 1 && p <= max) goTo();
+        else inp.value = inp.defaultValue;
+      });
+      inp.addEventListener('focus', function () { this.select(); });
+    });
+
+    /* Per-page select */
+    document.querySelectorAll('.pg-per-page').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var url = new URL(window.location.href);
+        url.searchParams.set('per_page', this.value);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+      });
     });
   }
 
@@ -199,6 +266,8 @@
     initTweaks();
     initMessages();
     initShortcuts();
+    initConfirm();
+    initPagination();
   });
 
   window.showToast = showToast;

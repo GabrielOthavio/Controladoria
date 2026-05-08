@@ -10,7 +10,7 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">Entidades de Auditoria</h1>
-    <p class="page-subtitle">{{ entidades|length }} entidade{% if entidades|length != 1 %}s{% endif %} cadastrada{% if entidades|length != 1 %}s{% endif %}</p>
+    <p class="page-subtitle">{{ paginator.count }} entidade{% if paginator.count != 1 %}s{% endif %} cadastrada{% if paginator.count != 1 %}s{% endif %}</p>
   </div>
   <div class="page-actions">
     {% if request.user.perfil == 'CHEFE' %}
@@ -22,6 +22,23 @@
 </div>
 
 <div class="card">
+
+  <!-- ── Toolbar ── -->
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <form method="get" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:12px;pointer-events:none"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome…" data-search-input
+               class="form-control" style="padding-left:30px;width:260px;height:32px;font-size:13px">
+      </div>
+    </form>
+    <span style="font-size:12px;color:var(--fg-muted);white-space:nowrap;margin-left:auto">
+      {{ paginator.count }} registro{% if paginator.count != 1 %}s{% endif %}
+    </span>
+  </div>
+
+  <!-- ── Tabela ── -->
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -47,15 +64,13 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="2">
+          <td colspan="{% if request.user.perfil == 'CHEFE' %}2{% else %}1{% endif %}">
             <div class="empty-state">
-              <div class="empty-icon"><i class="bi bi-building"></i></div>
-              <p class="empty-title">Nenhuma entidade cadastrada</p>
-              <p class="empty-msg">Entidades são vinculadas às matrizes de auditoria.</p>
-              {% if request.user.perfil == 'CHEFE' %}
-              <a href="{% url 'Auth:adicionar_entidade' %}" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Nova Entidade
-              </a>
+              <div class="empty-icon"><i class="bi bi-{% if q %}search{% else %}building{% endif %}"></i></div>
+              <p class="empty-title">{% if q %}Nenhuma entidade encontrada para "{{ q }}"{% else %}Nenhuma entidade cadastrada{% endif %}</p>
+              <p class="empty-msg">{% if q %}Tente outros termos ou <a href="?per_page={{ per_page }}">limpe a busca</a>.{% else %}Entidades são vinculadas às matrizes de auditoria.{% endif %}</p>
+              {% if not q and request.user.perfil == 'CHEFE' %}
+              <a href="{% url 'Auth:adicionar_entidade' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Nova Entidade</a>
               {% endif %}
             </div>
           </td>
@@ -64,5 +79,9 @@
       </tbody>
     </table>
   </div>
+
+  <!-- ── Rodapé ── -->
+  {% include "partials/_pagination.html" %}
+
 </div>
 {% endblock %}

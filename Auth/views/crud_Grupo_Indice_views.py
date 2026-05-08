@@ -5,6 +5,8 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from ..forms import GrupoIndiceForm
@@ -15,12 +17,26 @@ from .Core_views import is_chefe
 @login_required(login_url='Auth:login')
 @user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
 def lista_grupos_indice(request):
-    """
-    Exibe uma lista de todos os Grupos de Índice.
-    Acessível apenas para o perfil 'CHEFE'.
-    """
-    grupos = GrupoIndice.objects.all()
-    context = {'grupos_indice': grupos}
+    try:
+        per_page = int(request.GET.get('per_page', 16))
+        if per_page not in (8, 16, 32, 64):
+            per_page = 16
+    except (ValueError, TypeError):
+        per_page = 16
+    q = request.GET.get('q', '').strip()
+    qs = GrupoIndice.objects.all().order_by('nome')
+    if q:
+        qs = qs.filter(Q(nome__icontains=q) | Q(observacao__icontains=q))
+    paginator = Paginator(qs, per_page)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
+    context = {
+        'grupos_indice': page_obj,
+        'page_obj':      page_obj,
+        'paginator':     paginator,
+        'per_page':      per_page,
+        'q':             q,
+        'extra_query':   '',
+    }
     return render(request, 'grupos_indice/lista.html', context)
 
 @login_required(login_url='Auth:login')

@@ -4,6 +4,8 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 
@@ -13,11 +15,26 @@ from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
 def lista_tipos_indice(request):
-    """
-    Exibe uma lista de todos os Tipos de Índice cadastrados.
-    """
-    tipos_indice = TipoIndice.objects.all().order_by('descricao')
-    context = {'tipos_indice': tipos_indice}
+    try:
+        per_page = int(request.GET.get('per_page', 16))
+        if per_page not in (8, 16, 32, 64):
+            per_page = 16
+    except (ValueError, TypeError):
+        per_page = 16
+    q = request.GET.get('q', '').strip()
+    qs = TipoIndice.objects.select_related('indice_grupo').order_by('descricao')
+    if q:
+        qs = qs.filter(Q(descricao__icontains=q) | Q(indice_grupo__nome__icontains=q))
+    paginator = Paginator(qs, per_page)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
+    context = {
+        'tipos_indice': page_obj,
+        'page_obj':     page_obj,
+        'paginator':    paginator,
+        'per_page':     per_page,
+        'q':            q,
+        'extra_query':  '',
+    }
     return render(request, 'tipos_indice/lista.html', context)
 
 

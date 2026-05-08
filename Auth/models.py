@@ -35,6 +35,16 @@ class Usuario(AbstractUser):
     def __str__(self):
         return self.get_full_name() or self.username
 
+    @property
+    def iniciais(self):
+        nome = self.get_full_name()
+        if nome:
+            partes = nome.split()
+            if len(partes) >= 2:
+                return (partes[0][0] + partes[-1][0]).upper()
+            return partes[0][:2].upper()
+        return self.username[:2].upper()
+
 
 class TipoAcao(models.Model):
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -83,6 +93,26 @@ class TipoIndice(models.Model):
 
 
 class Acao(models.Model):
+    STATUS_CHOICES = [
+        ('EM_ANDAMENTO',      'Em andamento'),
+        ('AGUARDANDO_REVISAO','Aguardando revisão'),
+        ('HOMOLOGADA',        'Homologada'),
+        ('ATRASADA',          'Atrasada'),
+    ]
+    UNIDADE_CHOICES = [
+        ('SEFAZ',  'SEFAZ'),
+        ('SESAU',  'SESAU'),
+        ('SEINFRA','SEINFRA'),
+        ('SEMA',   'SEMA'),
+        ('SEAD',   'SEAD'),
+        ('SEDUC',  'SEDUC'),
+        ('SESP',   'SESP'),
+        ('SEAG',   'SEAG'),
+        ('SEJEL',  'SEJEL'),
+        ('SEDU',   'SEDU'),
+        ('OUTRO',  'Outro'),
+    ]
+
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     id_por_tipo_acao = models.PositiveIntegerField(editable=False, verbose_name="Ref. Categoria")
     data_execucao = models.DateField(verbose_name="Data de Execução")
@@ -90,6 +120,9 @@ class Acao(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Responsável")
     avaliacao = models.TextField(verbose_name="Avaliação")
     conclusao = models.TextField(verbose_name="Conclusão")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='EM_ANDAMENTO', verbose_name="Status")
+    unidade = models.CharField(max_length=20, choices=UNIDADE_CHOICES, default='SEFAZ', verbose_name="Unidade")
+    is_paint = models.BooleanField(default=False, verbose_name="PAINT")
 
     class Meta:
         unique_together = ['tipo_acao', 'id_por_tipo_acao']
@@ -165,7 +198,7 @@ class MatrizAuditoria(models.Model):
         EntidadeAuditoria, on_delete=models.PROTECT,
         null=True, blank=True, verbose_name="Entidade da matriz de auditoria"
     )
-    observacoes = models.TextField(default='', verbose_name="Observações adicionais da matriz de auditoria")
+    observacoes = models.TextField(blank=True, default='', verbose_name="Observações adicionais da matriz de auditoria")
 
     class Meta:
         verbose_name = "Matriz de Auditoria"

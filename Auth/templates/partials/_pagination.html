@@ -1,0 +1,55 @@
+{% comment %}
+Shared pagination footer. Include inside a .card, after the table-wrap.
+Required context: page_obj, paginator, per_page, q
+Optional context: extra_query (string like "&status=EM_ANDAMENTO")
+{% endcomment %}
+{% if paginator.count > 0 %}
+<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid var(--border)">
+
+  <span style="font-size:12px;color:var(--fg-muted);white-space:nowrap">
+    Mostrando <strong style="color:var(--fg)">{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+    de <strong style="color:var(--fg)">{{ paginator.count }}</strong>
+  </span>
+
+  <div style="display:flex;align-items:center;gap:2px;margin:0 auto">
+    {% if page_obj.has_previous %}
+      <a href="?page=1&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}{{ extra_query }}"
+         class="btn btn-ghost btn-sm btn-icon" title="Primeira página"><i class="bi bi-chevron-double-left"></i></a>
+      <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}{{ extra_query }}"
+         class="btn btn-ghost btn-sm btn-icon" title="Anterior"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+      <button class="btn btn-ghost btn-sm btn-icon" disabled style="opacity:.3"><i class="bi bi-chevron-double-left"></i></button>
+      <button class="btn btn-ghost btn-sm btn-icon" disabled style="opacity:.3"><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+
+    <input class="pg-input" type="text" inputmode="numeric"
+           value="{{ page_obj.number }}"
+           data-max="{{ paginator.num_pages }}"
+           style="width:40px;height:28px;text-align:center;font-size:13px;font-weight:600;
+                  border:1px solid var(--border);border-radius:var(--radius-sm);
+                  background:var(--bg-elev);color:var(--fg);padding:0 4px">
+    <span style="font-size:12px;color:var(--fg-muted);padding:0 2px">/ {{ paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}{{ extra_query }}"
+         class="btn btn-ghost btn-sm btn-icon" title="Próxima"><i class="bi bi-chevron-right"></i></a>
+      <a href="?page={{ paginator.num_pages }}&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}{{ extra_query }}"
+         class="btn btn-ghost btn-sm btn-icon" title="Última página"><i class="bi bi-chevron-double-right"></i></a>
+    {% else %}
+      <button class="btn btn-ghost btn-sm btn-icon" disabled style="opacity:.3"><i class="bi bi-chevron-right"></i></button>
+      <button class="btn btn-ghost btn-sm btn-icon" disabled style="opacity:.3"><i class="bi bi-chevron-double-right"></i></button>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+    <span style="font-size:12px;color:var(--fg-muted)">Por página:</span>
+    <select class="pg-per-page" style="height:28px;padding:0 6px;background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--fg);font-size:13px;cursor:pointer">
+      <option value="8"  {% if per_page == 8  %}selected{% endif %}>8</option>
+      <option value="16" {% if per_page == 16 %}selected{% endif %}>16</option>
+      <option value="32" {% if per_page == 32 %}selected{% endif %}>32</option>
+      <option value="64" {% if per_page == 64 %}selected{% endif %}>64</option>
+    </select>
+  </div>
+
+</div>
+{% endif %}

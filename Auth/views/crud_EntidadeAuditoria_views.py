@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from ..forms import EntidadeAuditoriaForm
@@ -8,8 +9,26 @@ from ..models import EntidadeAuditoria
 
 @login_required(login_url='Auth:login')
 def lista_entidades(request):
-    entidades = EntidadeAuditoria.objects.order_by('nome')
-    return render(request, 'entidade_auditoria/lista.html', {'entidades': entidades})
+    try:
+        per_page = int(request.GET.get('per_page', 16))
+        if per_page not in (8, 16, 32, 64):
+            per_page = 16
+    except (ValueError, TypeError):
+        per_page = 16
+    q = request.GET.get('q', '').strip()
+    qs = EntidadeAuditoria.objects.order_by('nome')
+    if q:
+        qs = qs.filter(nome__icontains=q)
+    paginator = Paginator(qs, per_page)
+    page_obj  = paginator.get_page(request.GET.get('page', 1))
+    return render(request, 'entidade_auditoria/lista.html', {
+        'entidades':   page_obj,
+        'page_obj':    page_obj,
+        'paginator':   paginator,
+        'per_page':    per_page,
+        'q':           q,
+        'extra_query': '',
+    })
 
 
 @login_required(login_url='Auth:login')

@@ -10,63 +10,99 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">Auditorias</h1>
-    <p class="page-subtitle">{{ auditorias|length }} auditoria{% if auditorias|length != 1 %}s{% endif %} encontrada{% if auditorias|length != 1 %}s{% endif %}</p>
+    <p class="page-subtitle">
+      {{ tab_counts.total }} auditoria{% if tab_counts.total != 1 %}s{% endif %}
+    </p>
   </div>
   <div class="page-actions">
     {% if request.user.perfil == 'CHEFE' %}
-    <a href="{% url 'Auth:adicionar_auditoria' %}" class="btn btn-primary" data-shortcut-new>
+    <a href="{% url 'Auth:adicionar_auditoria' %}" class="btn btn-primary" data-shortcut-new title="Atalho: N">
       <i class="bi bi-plus"></i> Nova Auditoria
     </a>
     {% endif %}
   </div>
 </div>
 
-<!-- Status filter -->
-<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
-  <a href="?" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-ghost{% endif %}">Todas</a>
-  <a href="?status=PLANEJADA"    class="btn btn-sm {% if status_filter == 'PLANEJADA' %}btn-primary{% else %}btn-ghost{% endif %}">Planejadas</a>
-  <a href="?status=EM_ANDAMENTO" class="btn btn-sm {% if status_filter == 'EM_ANDAMENTO' %}btn-primary{% else %}btn-ghost{% endif %}">Em Andamento</a>
-  <a href="?status=CONCLUIDA"    class="btn btn-sm {% if status_filter == 'CONCLUIDA' %}btn-primary{% else %}btn-ghost{% endif %}">Concluídas</a>
-  <a href="?status=CANCELADA"    class="btn btn-sm {% if status_filter == 'CANCELADA' %}btn-primary{% else %}btn-ghost{% endif %}">Canceladas</a>
-</div>
-
 <div class="card">
+
+  <!-- ── Toolbar ── -->
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+
+    <!-- Busca -->
+    <form method="get" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <input type="hidden" name="status"   value="{{ status_filter }}">
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:12px;pointer-events:none"></i>
+        <input type="text" name="q" value="{{ q }}"
+               placeholder="Buscar por nome ou órgão…" data-search-input
+               class="form-control" style="padding-left:30px;width:260px;height:32px;font-size:13px">
+      </div>
+    </form>
+
+    <!-- Abas de filtro -->
+    <nav class="filter-tabs" style="flex:1;overflow-x:auto">
+      {% url 'Auth:lista_auditorias' as base_url %}
+      <a href="{{ base_url }}?per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+         class="filter-tab {% if not status_filter %}active{% endif %}">
+        Todas <span class="tab-count">{{ tab_counts.total }}</span>
+      </a>
+      <a href="{{ base_url }}?status=PLANEJADA&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+         class="filter-tab {% if status_filter == 'PLANEJADA' %}active{% endif %}">
+        Planejadas <span class="tab-count">{{ tab_counts.planejada }}</span>
+      </a>
+      <a href="{{ base_url }}?status=EM_ANDAMENTO&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+         class="filter-tab {% if status_filter == 'EM_ANDAMENTO' %}active{% endif %}">
+        Em andamento <span class="tab-count">{{ tab_counts.em_andamento }}</span>
+      </a>
+      <a href="{{ base_url }}?status=CONCLUIDA&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+         class="filter-tab {% if status_filter == 'CONCLUIDA' %}active{% endif %}">
+        Concluídas <span class="tab-count">{{ tab_counts.concluida }}</span>
+      </a>
+      <a href="{{ base_url }}?status=CANCELADA&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+         class="filter-tab {% if status_filter == 'CANCELADA' %}active{% endif %}">
+        Canceladas <span class="tab-count">{{ tab_counts.cancelada }}</span>
+      </a>
+    </nav>
+
+    <!-- Contador -->
+    <span style="font-size:12px;color:var(--fg-muted);white-space:nowrap;flex-shrink:0">
+      {{ paginator.count }} de {{ tab_counts.total }}
+    </span>
+  </div>
+
+  <!-- ── Tabela ── -->
   <div class="table-wrap">
-    <table class="table sortable-table" id="auditorias-table">
+    <table class="table" id="auditorias-table">
       <thead>
         <tr>
-          <th class="sortable" data-col="0">Órgão <i class="bi bi-chevron-expand sort-icon" style="font-size:10px;opacity:.5"></i></th>
-          <th class="sortable" data-col="1">Nome <i class="bi bi-chevron-expand sort-icon" style="font-size:10px;opacity:.5"></i></th>
+          <th>Órgão</th>
+          <th>Nome</th>
           <th>Status</th>
-          <th class="sortable" data-col="3">Início <i class="bi bi-chevron-expand sort-icon" style="font-size:10px;opacity:.5"></i></th>
-          <th class="sortable" data-col="4">Conclusão <i class="bi bi-chevron-expand sort-icon" style="font-size:10px;opacity:.5"></i></th>
-          <th class="right sortable" data-col="5">Achados <i class="bi bi-chevron-expand sort-icon" style="font-size:10px;opacity:.5"></i></th>
+          <th class="right">Início</th>
+          <th class="right">Conclusão</th>
+          <th class="right">Achados</th>
           <th class="col-actions">Ações</th>
         </tr>
       </thead>
       <tbody>
         {% for a in auditorias %}
         <tr>
-          <td style="color:var(--fg-muted)">{{ a.orgao|default:"—" }}</td>
+          <td style="color:var(--fg-muted);font-size:13px">{{ a.orgao|default:"—" }}</td>
           <td><span class="cell-primary">{{ a.nome_auditoria }}</span></td>
           <td>
-            {% if a.status == 'PLANEJADA' %}
-              <span class="badge">Planejada</span>
-            {% elif a.status == 'EM_ANDAMENTO' %}
-              <span class="badge badge-warning">Em Andamento</span>
-            {% elif a.status == 'CONCLUIDA' %}
-              <span class="badge badge-success">Concluída</span>
-            {% elif a.status == 'CANCELADA' %}
-              <span class="badge badge-danger">Cancelada</span>
-            {% endif %}
+            <span class="status-badge status-{{ a.status|lower }}">
+              <span class="status-dot"></span>
+              {{ a.get_status_display }}
+            </span>
           </td>
-          <td class="num" data-value="{{ a.data_inicio|date:'Y-m-d'|default:'' }}">{{ a.data_inicio|date:"d/m/Y"|default:"—" }}</td>
-          <td class="num" data-value="{{ a.data_conclusao|date:'Y-m-d'|default:'' }}">{{ a.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
-          <td class="right" data-value="{{ a.total_achados }}">
+          <td class="num right">{{ a.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td class="num right">{{ a.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
+          <td class="right">
             {% if a.total_achados > 0 %}
-              <span class="badge badge-warning">{{ a.total_achados }}</span>
+              <span style="font-weight:600;color:var(--warning)">{{ a.total_achados }}</span>
             {% else %}
-              <span style="color:var(--fg-subtle)">—</span>
+              <span style="color:var(--fg-muted)">—</span>
             {% endif %}
           </td>
           <td class="col-actions">
@@ -74,12 +110,15 @@
               <i class="bi bi-gear"></i> Gerenciar
             </a>
             {% if request.user.perfil == 'CHEFE' %}
-            <a href="{% url 'Auth:editar_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm" title="Editar">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'Auth:excluir_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm text-danger" title="Excluir">
-              <i class="bi bi-trash"></i>
-            </a>
+            <span style="display:inline-flex;align-items:center;gap:2px;border-left:1px solid var(--border);margin-left:4px;padding-left:4px">
+              <a href="{% url 'Auth:editar_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'Auth:excluir_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm text-danger" title="Excluir"
+                 data-confirm="Excluir a auditoria '{{ a.nome_auditoria }}'? Esta ação não pode ser desfeita.">
+                <i class="bi bi-trash"></i>
+              </a>
+            </span>
             {% endif %}
           </td>
         </tr>
@@ -87,10 +126,18 @@
         <tr>
           <td colspan="7">
             <div class="empty-state">
-              <div class="empty-icon"><i class="bi bi-clipboard-check"></i></div>
-              <p class="empty-title">Nenhuma auditoria{% if status_filter %} com este status{% endif %} registrada</p>
-              <p class="empty-msg">{% if status_filter %}Tente outro filtro ou crie uma nova auditoria.{% else %}Crie a primeira auditoria para iniciar o acompanhamento.{% endif %}</p>
-              {% if request.user.perfil == 'CHEFE' %}
+              <div class="empty-icon"><i class="bi bi-{% if q %}search{% else %}clipboard-check{% endif %}"></i></div>
+              <p class="empty-title">
+                {% if q %}Nenhuma auditoria encontrada para "{{ q }}"
+                {% elif status_filter %}Nenhuma auditoria com este status
+                {% else %}Nenhuma auditoria cadastrada{% endif %}
+              </p>
+              <p class="empty-msg">
+                {% if q %}Tente outros termos ou <a href="?status={{ status_filter }}&per_page={{ per_page }}">limpe a busca</a>.
+                {% elif status_filter %}Tente outro filtro ou crie uma nova auditoria.
+                {% else %}Crie a primeira auditoria para iniciar o acompanhamento.{% endif %}
+              </p>
+              {% if not q and request.user.perfil == 'CHEFE' %}
               <a href="{% url 'Auth:adicionar_auditoria' %}" class="btn btn-primary">
                 <i class="bi bi-plus"></i> Nova Auditoria
               </a>
@@ -102,61 +149,9 @@
       </tbody>
     </table>
   </div>
+
+  <!-- ── Rodapé ── -->
+  {% include "partials/_pagination.html" %}
+
 </div>
-
-<script>
-(function () {
-  var table = document.getElementById('auditorias-table');
-  if (!table) return;
-  var tbody = table.querySelector('tbody');
-  var sortState = { col: -1, asc: true };
-
-  table.querySelectorAll('th.sortable').forEach(function (th) {
-    th.style.cursor = 'pointer';
-    th.addEventListener('click', function () {
-      var col = parseInt(th.dataset.col, 10);
-      if (sortState.col === col) {
-        sortState.asc = !sortState.asc;
-      } else {
-        sortState.col = col;
-        sortState.asc = true;
-      }
-      sortTable(col, sortState.asc);
-      updateIcons(th);
-    });
-  });
-
-  function cellVal(row, col) {
-    var td = row.cells[col];
-    return (td.dataset.value !== undefined ? td.dataset.value : td.textContent).trim().toLowerCase();
-  }
-
-  function sortTable(col, asc) {
-    var rows = Array.from(tbody.querySelectorAll('tr')).filter(function (r) {
-      return r.cells.length > 2;
-    });
-    rows.sort(function (a, b) {
-      var va = cellVal(a, col), vb = cellVal(b, col);
-      if (va === '—' || va === '') return 1;
-      if (vb === '—' || vb === '') return -1;
-      var n = parseFloat(va) - parseFloat(vb);
-      if (!isNaN(n)) return asc ? n : -n;
-      return asc ? va.localeCompare(vb, 'pt') : vb.localeCompare(va, 'pt');
-    });
-    rows.forEach(function (r) { tbody.appendChild(r); });
-  }
-
-  function updateIcons(activeTh) {
-    table.querySelectorAll('th.sortable .sort-icon').forEach(function (ic) {
-      ic.className = 'bi bi-chevron-expand sort-icon';
-      ic.style.opacity = '0.5';
-    });
-    var ic = activeTh.querySelector('.sort-icon');
-    if (ic) {
-      ic.className = sortState.asc ? 'bi bi-chevron-up sort-icon' : 'bi bi-chevron-down sort-icon';
-      ic.style.opacity = '1';
-    }
-  }
-}());
-</script>
 {% endblock %}

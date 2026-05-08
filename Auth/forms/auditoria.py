@@ -14,15 +14,15 @@ class AuditoriaForm(forms.ModelForm):
             'usuarios_envolvidos', 'informacoes_campos_texto',
         ]
         widgets = {
-            'nome_auditoria':           forms.TextInput(attrs={'class': 'form-control'}),
+            'nome_auditoria':           forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Auditoria de Contratos 2025 – Secretaria de Educação'}),
             'status':                   forms.Select(attrs={'class': 'form-select'}),
             'matriz':                   forms.Select(attrs={'class': 'form-select'}),
-            'orgao':                    forms.TextInput(attrs={'class': 'form-control'}),
-            'responsavel_orgao':        forms.TextInput(attrs={'class': 'form-control'}),
+            'orgao':                    forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Secretaria Municipal de Saúde'}),
+            'responsavel_orgao':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome completo do responsável no órgão auditado'}),
             'data_inicio':              forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'data_conclusao':           forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'usuarios_envolvidos':      forms.CheckboxSelectMultiple(),
-            'informacoes_campos_texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'informacoes_campos_texto': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Observações adicionais, contexto ou informações relevantes para esta auditoria…'}),
         }
 
     def clean_nome_auditoria(self):
@@ -46,13 +46,13 @@ class EtapaForm(forms.ModelForm):
         model = Etapa
         fields = ['orientacao', 'documentos', 'usuario', 'atividade', 'prazo', 'situacao', 'metodo']
         widgets = {
-            'orientacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'documentos': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'orientacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Instruções ou orientações para execução desta etapa…'}),
+            'documentos': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Liste os documentos a serem analisados ou solicitados…'}),
             'usuario':    forms.Select(attrs={'class': 'form-select'}),
-            'atividade':  forms.TextInput(attrs={'class': 'form-control'}),
+            'atividade':  forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descreva a atividade a ser executada…'}),
             'prazo':      forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'situacao':   forms.Select(attrs={'class': 'form-select'}),
-            'metodo':     forms.TextInput(attrs={'class': 'form-control'}),
+            'metodo':     forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Análise documental, Entrevista, Observação direta…'}),
         }
 
     def clean_orientacao(self):

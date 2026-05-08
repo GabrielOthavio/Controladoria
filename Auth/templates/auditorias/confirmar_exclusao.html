@@ -16,8 +16,19 @@
       <h2 class="confirm-title">Confirmar Exclusão</h2>
     </div>
     <div class="confirm-body">
-      <p>Tem certeza que deseja excluir permanentemente a auditoria abaixo?</p>
+      <p>Tem certeza que deseja excluir permanentemente a auditoria abaixo? Esta operação não pode ser desfeita e removerá todas as etapas e achados vinculados.</p>
       <p class="confirm-subject">{{ objeto.nome_auditoria }}</p>
+      <div class="confirm-details">
+        <span><i class="bi bi-building"></i> {{ objeto.orgao|default:"Órgão não informado" }}</span>
+        <span><i class="bi bi-flag"></i>
+          {% if objeto.status == 'PLANEJADA' %}Planejada
+          {% elif objeto.status == 'EM_ANDAMENTO' %}Em Andamento
+          {% elif objeto.status == 'CONCLUIDA' %}Concluída
+          {% elif objeto.status == 'CANCELADA' %}Cancelada
+          {% endif %}
+        </span>
+        {% if objeto.data_inicio %}<span><i class="bi bi-calendar3"></i> Início: {{ objeto.data_inicio|date:"d/m/Y" }}</span>{% endif %}
+      </div>
     </div>
     <div class="confirm-actions">
       <a href="{% url 'Auth:lista_auditorias' %}" class="btn btn-ghost">Cancelar</a>

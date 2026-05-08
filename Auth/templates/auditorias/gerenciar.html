@@ -29,6 +29,48 @@
   {% endif %}
 </div>
 
+<!-- Pipeline de status — Engenharia Cognitiva: estado visível elimina Golfo de Avaliação -->
+<div class="status-pipeline" role="img" aria-label="Progresso da auditoria: {{ auditoria.get_status_display }}">
+  <div class="pipeline-step {% if auditoria.status == 'PLANEJADA' %}ps-active-planejada{% elif auditoria.status != 'CANCELADA' %}ps-done{% endif %}">
+    <i class="bi bi-{% if auditoria.status == 'PLANEJADA' %}record-circle-fill{% elif auditoria.status != 'CANCELADA' %}check-circle-fill{% else %}circle{% endif %}"></i>
+    Planejada
+  </div>
+  <div class="pipeline-sep"><i class="bi bi-chevron-right"></i></div>
+  <div class="pipeline-step {% if auditoria.status == 'EM_ANDAMENTO' %}ps-active-andamento{% elif auditoria.status == 'CONCLUIDA' %}ps-done{% endif %}">
+    <i class="bi bi-{% if auditoria.status == 'EM_ANDAMENTO' %}record-circle-fill{% elif auditoria.status == 'CONCLUIDA' %}check-circle-fill{% else %}circle{% endif %}"></i>
+    Em Andamento
+  </div>
+  <div class="pipeline-sep"><i class="bi bi-chevron-right"></i></div>
+  <div class="pipeline-step {% if auditoria.status == 'CONCLUIDA' %}ps-active-concluida{% endif %}">
+    <i class="bi bi-{% if auditoria.status == 'CONCLUIDA' %}check-circle-fill{% else %}circle{% endif %}"></i>
+    Concluída
+  </div>
+  {% if auditoria.status == 'CANCELADA' %}
+  <div class="pipeline-sep"><i class="bi bi-x"></i></div>
+  <div class="pipeline-step ps-active-cancelada">
+    <i class="bi bi-x-circle-fill"></i>
+    Cancelada
+  </div>
+  {% endif %}
+</div>
+
+{% if request.user.perfil == 'CHEFE' %}
+  {% if auditoria.status == 'PLANEJADA' %}
+  <!-- Golfo de Execução: torna óbvio o próximo passo sem obrigar navegar pelo formulário -->
+  <p class="pipeline-hint">
+    <i class="bi bi-arrow-right-circle"></i>
+    Próxima etapa: <strong>Em Andamento</strong> —
+    <a href="{% url 'Auth:editar_auditoria' id_unico=auditoria.id_unico %}">Editar para avançar o status</a>
+  </p>
+  {% elif auditoria.status == 'EM_ANDAMENTO' %}
+  <p class="pipeline-hint">
+    <i class="bi bi-arrow-right-circle"></i>
+    Próxima etapa: <strong>Concluída</strong> —
+    <a href="{% url 'Auth:editar_auditoria' id_unico=auditoria.id_unico %}">Editar para avançar o status</a>
+  </p>
+  {% endif %}
+{% endif %}
+
 <!-- Summary bar -->
 <div class="card" style="margin-bottom:20px">
   <div class="card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px">

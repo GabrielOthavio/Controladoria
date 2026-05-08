@@ -10,16 +10,33 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">Índices</h1>
-    <p class="page-subtitle">{{ indices|length }} registro{% if indices|length != 1 %}s{% endif %} cadastrado{% if indices|length != 1 %}s{% endif %}</p>
+    <p class="page-subtitle">Índices econômicos utilizados como base de cálculo</p>
   </div>
   <div class="page-actions">
-    <a href="{% url 'Auth:adicionar_indice' %}" class="btn btn-primary" data-shortcut-new>
+    <a href="{% url 'Auth:adicionar_indice' %}" class="btn btn-primary" data-shortcut-new title="Atalho: N">
       <i class="bi bi-plus"></i> Novo Índice
     </a>
   </div>
 </div>
 
 <div class="card">
+
+  <!-- ── Toolbar ── -->
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <form method="get" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:12px;pointer-events:none"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por tipo ou observação…" data-search-input
+               class="form-control" style="padding-left:30px;width:260px;height:32px;font-size:13px">
+      </div>
+    </form>
+    <span style="font-size:12px;color:var(--fg-muted);white-space:nowrap;margin-left:auto">
+      {{ paginator.count }} registro{% if paginator.count != 1 %}s{% endif %}
+    </span>
+  </div>
+
+  <!-- ── Tabela ── -->
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -36,13 +53,14 @@
         <tr>
           <td><span class="cell-primary">{{ indice.tipo_indice.descricao }}</span></td>
           <td class="num">{{ indice.mes|stringformat:"02d" }}/{{ indice.ano }}</td>
-          <td class="num">{{ indice.valor }}</td>
+          <td class="num right" style="font-weight:600;color:var(--accent)">{{ indice.valor }}</td>
           <td><span class="truncate">{{ indice.observacao|default:"—" }}</span></td>
           <td class="col-actions">
             <a href="{% url 'Auth:editar_indice' id_unico=indice.id_unico %}" class="btn btn-ghost btn-sm">
               <i class="bi bi-pencil"></i> Editar
             </a>
-            <a href="{% url 'Auth:excluir_indice' id_unico=indice.id_unico %}" class="btn btn-ghost btn-sm text-danger">
+            <a href="{% url 'Auth:excluir_indice' id_unico=indice.id_unico %}" class="btn btn-ghost btn-sm text-danger"
+               data-confirm="Excluir o índice {{ indice.tipo_indice.descricao }} {{ indice.mes|stringformat:'02d' }}/{{ indice.ano }}? Esta ação não pode ser desfeita.">
               <i class="bi bi-trash"></i> Excluir
             </a>
           </td>
@@ -51,12 +69,12 @@
         <tr>
           <td colspan="5">
             <div class="empty-state">
-              <div class="empty-icon"><i class="bi bi-graph-up"></i></div>
-              <p class="empty-title">Nenhum índice cadastrado</p>
-              <p class="empty-msg">Adicione índices econômicos para uso nos cálculos.</p>
-              <a href="{% url 'Auth:adicionar_indice' %}" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Novo Índice
-              </a>
+              <div class="empty-icon"><i class="bi bi-{% if q %}search{% else %}graph-up{% endif %}"></i></div>
+              <p class="empty-title">{% if q %}Nenhum índice encontrado para "{{ q }}"{% else %}Nenhum índice cadastrado{% endif %}</p>
+              <p class="empty-msg">{% if q %}Tente outros termos ou <a href="?per_page={{ per_page }}">limpe a busca</a>.{% else %}Adicione índices econômicos para uso nos cálculos.{% endif %}</p>
+              {% if not q %}
+              <a href="{% url 'Auth:adicionar_indice' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Novo Índice</a>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -64,5 +82,9 @@
       </tbody>
     </table>
   </div>
+
+  <!-- ── Rodapé ── -->
+  {% include "partials/_pagination.html" %}
+
 </div>
 {% endblock %}

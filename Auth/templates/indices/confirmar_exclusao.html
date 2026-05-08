@@ -16,8 +16,12 @@
       <h2 class="confirm-title">Confirmar Exclusão</h2>
     </div>
     <div class="confirm-body">
-      <p>Tem certeza que deseja excluir permanentemente o índice abaixo?</p>
+      <p>Tem certeza que deseja excluir permanentemente o índice abaixo? Esta operação não pode ser desfeita.</p>
       <p class="confirm-subject">{{ objeto.tipo_indice.descricao }} — {{ objeto.mes|stringformat:"02d" }}/{{ objeto.ano }}</p>
+      <div class="confirm-details">
+        <span><i class="bi bi-percent"></i> Valor: {{ objeto.valor }}%</span>
+        <span><i class="bi bi-layers"></i> {{ objeto.tipo_indice.indice_grupo.nome }}</span>
+      </div>
     </div>
     <div class="confirm-actions">
       <a href="{% url 'Auth:lista_indices' %}" class="btn btn-ghost">Cancelar</a>

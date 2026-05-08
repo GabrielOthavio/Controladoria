@@ -10,7 +10,7 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">Tipos de Índice</h1>
-    <p class="page-subtitle">{{ tipos_indice|length }} tipo{% if tipos_indice|length != 1 %}s{% endif %} cadastrado{% if tipos_indice|length != 1 %}s{% endif %}</p>
+    <p class="page-subtitle">{{ paginator.count }} tipo{% if paginator.count != 1 %}s{% endif %} cadastrado{% if paginator.count != 1 %}s{% endif %}</p>
   </div>
   <div class="page-actions">
     <a href="{% url 'Auth:adicionar_tipo_indice' %}" class="btn btn-primary" data-shortcut-new>
@@ -20,6 +20,23 @@
 </div>
 
 <div class="card">
+
+  <!-- ── Toolbar ── -->
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <form method="get" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:12px;pointer-events:none"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por descrição ou grupo…" data-search-input
+               class="form-control" style="padding-left:30px;width:260px;height:32px;font-size:13px">
+      </div>
+    </form>
+    <span style="font-size:12px;color:var(--fg-muted);white-space:nowrap;margin-left:auto">
+      {{ paginator.count }} registro{% if paginator.count != 1 %}s{% endif %}
+    </span>
+  </div>
+
+  <!-- ── Tabela ── -->
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -33,7 +50,7 @@
         {% for tipo in tipos_indice %}
         <tr>
           <td><span class="cell-primary">{{ tipo.descricao }}</span></td>
-          <td>{{ tipo.indice_grupo|default:"—" }}</td>
+          <td><span class="badge-unit">{{ tipo.indice_grupo|default:"—" }}</span></td>
           <td class="col-actions">
             <a href="{% url 'Auth:editar_tipo_indice' id_unico=tipo.id_unico %}" class="btn btn-ghost btn-sm">
               <i class="bi bi-pencil"></i> Editar
@@ -47,12 +64,12 @@
         <tr>
           <td colspan="3">
             <div class="empty-state">
-              <div class="empty-icon"><i class="bi bi-layers"></i></div>
-              <p class="empty-title">Nenhum tipo de índice cadastrado</p>
-              <p class="empty-msg">Crie grupos primeiro, depois adicione tipos de índice.</p>
-              <a href="{% url 'Auth:adicionar_tipo_indice' %}" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Novo Tipo
-              </a>
+              <div class="empty-icon"><i class="bi bi-{% if q %}search{% else %}layers{% endif %}"></i></div>
+              <p class="empty-title">{% if q %}Nenhum tipo encontrado para "{{ q }}"{% else %}Nenhum tipo de índice cadastrado{% endif %}</p>
+              <p class="empty-msg">{% if q %}Tente outros termos ou <a href="?per_page={{ per_page }}">limpe a busca</a>.{% else %}Crie grupos primeiro, depois adicione tipos de índice.{% endif %}</p>
+              {% if not q %}
+              <a href="{% url 'Auth:adicionar_tipo_indice' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Novo Tipo</a>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -60,5 +77,9 @@
       </tbody>
     </table>
   </div>
+
+  <!-- ── Rodapé ── -->
+  {% include "partials/_pagination.html" %}
+
 </div>
 {% endblock %}
