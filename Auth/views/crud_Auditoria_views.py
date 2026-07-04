@@ -10,6 +10,7 @@ from ..models import Auditoria, Etapa, Achado
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'ver')
 def lista_auditorias(request):
     per_page = get_per_page(request)
 
@@ -97,6 +98,7 @@ def excluir_auditoria(request, id_unico):
 # ── Gerenciar ──────────────────────────────────────────────────────────────────
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'ver')
 def gerenciar_auditoria(request, id_unico):
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     etapas = (

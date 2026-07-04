@@ -6,7 +6,7 @@ from datetime import date, datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.conf import settings
 from django.utils.functional import cached_property
@@ -92,11 +92,11 @@ class PerfilPermissao(models.Model):
 class Usuario(AbstractUser):
     id_unico  = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     cpf       = EncryptedCharField(max_length=14, unique=True, verbose_name="CPF")
-    telefone  = models.CharField(max_length=15, blank=True, null=True)
-    rua       = models.CharField(max_length=255, blank=True, null=True)
-    bairro    = models.CharField(max_length=100, blank=True, null=True)
-    numero    = models.CharField(max_length=10, blank=True, null=True)
-    cep       = models.CharField(max_length=9, blank=True, null=True)
+    telefone  = EncryptedCharField(max_length=15, blank=True, null=True)
+    rua       = EncryptedCharField(max_length=255, blank=True, null=True)
+    bairro    = EncryptedCharField(max_length=100, blank=True, null=True)
+    numero    = EncryptedCharField(max_length=10, blank=True, null=True)
+    cep       = EncryptedCharField(max_length=9, blank=True, null=True)
     perfil    = models.ForeignKey(
         'Perfil', on_delete=models.PROTECT,
         null=True, blank=True,
@@ -297,6 +297,7 @@ class Auditoria(models.Model):
     ]
 
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    id_por_orgao = models.PositiveIntegerField(editable=False, null=True, blank=True, verbose_name="Ref. Órgão")
     nome_auditoria = models.CharField(max_length=255, verbose_name="Nome da Auditoria")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PLANEJADA', verbose_name="Status")
     matriz = models.ForeignKey(
@@ -326,11 +327,31 @@ class Auditoria(models.Model):
         verbose_name_plural = "Auditorias"
         ordering = ['-data_criacao']
 
+    def save(self, *args, **kwargs):
+        if not self.id_por_orgao:
+            from django.db import transaction
+            with transaction.atomic():
+                ultimo = (
+                    Auditoria.objects.select_for_update()
+                    .filter(orgao=self.orgao)
+                    .order_by('-id_por_orgao')
+                    .first()
+                )
+                self.id_por_orgao = (ultimo.id_por_orgao + 1) if ultimo and ultimo.id_por_orgao else 1
+                super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
+
     @property
     def resultado_calculado(self):
         if self.apuracao_inicial is not None and self.apuracao_final is not None:
             return self.apuracao_final - self.apuracao_inicial
         return None
+
+    @property
+    def identificacao_semantica(self):
+        categoria = self.orgao or 'Geral'
+        return f"Auditoria {categoria} {self.id_por_orgao:02d}"
 
     def __str__(self):
         return self.nome_auditoria
@@ -467,7 +488,7 @@ MODELOS_AUDITAVEIS = [
 ]
 
 
-CAMPOS_SENSIVEIS = {'password', 'last_login', 'email', 'telefone', 'rua', 'bairro', 'numero', 'cep'}
+CAMPOS_SENSIVEIS = {'password', 'last_login', 'email'}
 
 
 def _serializar_instancia(instance):
@@ -523,5 +544,21 @@ def _registrar_auditoria(sender, instance, created, **kwargs):
         uuid_objeto=getattr(instance, 'id_unico', None),
         estado_anterior=estado_anterior,
         estado_posterior=estado_posterior,
+        usuario=usuario if usuario and getattr(usuario, 'is_authenticated', False) else None,
+    )
+
+
+@receiver(post_delete, dispatch_uid='auditoria_post_delete')
+def _registrar_exclusao(sender, instance, **kwargs):
+    if sender not in MODELOS_AUDITAVEIS:
+        return
+    from Auth.middleware import get_current_user
+    usuario = get_current_user()
+    HistoricoAlteracoes.objects.create(
+        operacao='EXCLUIDO',
+        tipo_objeto=sender.__name__,
+        uuid_objeto=getattr(instance, 'id_unico', None),
+        estado_anterior=_serializar_instancia(instance),
+        estado_posterior=None,
         usuario=usuario if usuario and getattr(usuario, 'is_authenticated', False) else None,
     )

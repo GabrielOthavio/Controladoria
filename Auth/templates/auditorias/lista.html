@@ -92,7 +92,10 @@
         {% for a in auditorias %}
         <tr>
           <td style="color:var(--fg-muted);font-size:13px">{{ a.orgao|default:"—" }}</td>
-          <td><span class="cell-primary">{{ a.nome_auditoria }}</span></td>
+          <td>
+            <span class="cell-primary">{{ a.nome_auditoria }}</span><br>
+            <span style="color:var(--fg-muted);font-size:11px">{{ a.identificacao_semantica }}</span>
+          </td>
           <td>
             <span class="status-badge status-{{ a.status|lower }}">
               <span class="status-dot"></span>

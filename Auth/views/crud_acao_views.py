@@ -17,6 +17,7 @@ from ..models import Acao, TipoAcao
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('acoes', 'ver')
 def lista_acoes(request):
     per_page = get_per_page(request)
 

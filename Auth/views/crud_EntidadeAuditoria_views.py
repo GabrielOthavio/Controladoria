@@ -9,6 +9,7 @@ from ..models import EntidadeAuditoria
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('entidades', 'ver')
 def lista_entidades(request):
     per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()

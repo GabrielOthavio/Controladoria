@@ -13,6 +13,7 @@ from ..forms import TipoIndiceForm
 from ..models import TipoIndice
 
 @login_required(login_url='Auth:login')
+@requer_permissao('tipos_indice', 'ver')
 def lista_tipos_indice(request):
     per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()

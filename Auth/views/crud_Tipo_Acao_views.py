@@ -13,6 +13,7 @@ from ..forms import TipoAcaoForm
 from ..models import TipoAcao
 
 @login_required(login_url='Auth:login')
+@requer_permissao('tipos_acao', 'ver')
 def lista_tipos_acao(request):
     per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()

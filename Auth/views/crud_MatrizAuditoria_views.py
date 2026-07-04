@@ -10,6 +10,7 @@ from ..models import MatrizAuditoria
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('matrizes', 'ver')
 def lista_matrizes(request):
     per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()
