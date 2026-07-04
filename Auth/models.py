@@ -31,6 +31,20 @@ TELA_CHOICES = [
     ('perfis',        'Perfis'),
 ]
 
+UNIDADE_CHOICES = [
+    ('SEFAZ',  'SEFAZ'),
+    ('SESAU',  'SESAU'),
+    ('SEINFRA','SEINFRA'),
+    ('SEMA',   'SEMA'),
+    ('SEAD',   'SEAD'),
+    ('SEDUC',  'SEDUC'),
+    ('SESP',   'SESP'),
+    ('SEAG',   'SEAG'),
+    ('SEJEL',  'SEJEL'),
+    ('SEDU',   'SEDU'),
+    ('OUTRO',  'Outro'),
+]
+
 
 class Perfil(models.Model):
     id_unico  = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -97,6 +111,11 @@ class Usuario(AbstractUser):
     bairro    = EncryptedCharField(max_length=100, blank=True, null=True)
     numero    = EncryptedCharField(max_length=10, blank=True, null=True)
     cep       = EncryptedCharField(max_length=9, blank=True, null=True)
+    unidade   = models.CharField(
+        max_length=20, choices=UNIDADE_CHOICES,
+        null=True, blank=True, verbose_name="Unidade",
+        help_text="Se definida, restringe o acesso às Ações desta unidade. Deixe em branco para acesso irrestrito (ex.: controladoria)."
+    )
     perfil    = models.ForeignKey(
         'Perfil', on_delete=models.PROTECT,
         null=True, blank=True,
@@ -180,19 +199,7 @@ class Acao(models.Model):
         ('HOMOLOGADA',        'Homologada'),
         ('ATRASADA',          'Atrasada'),
     ]
-    UNIDADE_CHOICES = [
-        ('SEFAZ',  'SEFAZ'),
-        ('SESAU',  'SESAU'),
-        ('SEINFRA','SEINFRA'),
-        ('SEMA',   'SEMA'),
-        ('SEAD',   'SEAD'),
-        ('SEDUC',  'SEDUC'),
-        ('SESP',   'SESP'),
-        ('SEAG',   'SEAG'),
-        ('SEJEL',  'SEJEL'),
-        ('SEDU',   'SEDU'),
-        ('OUTRO',  'Outro'),
-    ]
+    UNIDADE_CHOICES = UNIDADE_CHOICES
 
     id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     id_por_tipo_acao = models.PositiveIntegerField(editable=False, verbose_name="Ref. Categoria")

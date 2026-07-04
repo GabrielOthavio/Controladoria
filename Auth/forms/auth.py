@@ -20,7 +20,7 @@ class CustomUserCreationForm(UserCreationForm):
         model = Usuario
         fields = (
             'username', 'first_name', 'last_name', 'email', 'cpf',
-            'telefone', 'rua', 'bairro', 'numero', 'cep',
+            'telefone', 'rua', 'bairro', 'numero', 'cep', 'unidade',
         )
         widgets = {
             'username':   forms.TextInput(attrs={'class': 'form-control'}),
@@ -33,6 +33,7 @@ class CustomUserCreationForm(UserCreationForm):
             'bairro':     forms.TextInput(attrs={'class': 'form-control'}),
             'numero':     forms.TextInput(attrs={'class': 'form-control'}),
             'cep':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'XXXXX-XXX'}),
+            'unidade':    forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -70,7 +71,7 @@ class CustomUserChangeForm(UserChangeForm):
         model = Usuario
         fields = (
             'username', 'email', 'first_name', 'last_name', 'cpf',
-            'telefone', 'rua', 'bairro', 'numero', 'cep', 'perfil', 'is_active',
+            'telefone', 'rua', 'bairro', 'numero', 'cep', 'unidade', 'perfil', 'is_active',
         )
         widgets = {
             'username':   forms.TextInput(attrs={'class': 'form-control'}),
@@ -83,6 +84,7 @@ class CustomUserChangeForm(UserChangeForm):
             'bairro':     forms.TextInput(attrs={'class': 'form-control'}),
             'numero':     forms.TextInput(attrs={'class': 'form-control'}),
             'cep':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'XXXXX-XXX'}),
+            'unidade':    forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean_cpf(self):

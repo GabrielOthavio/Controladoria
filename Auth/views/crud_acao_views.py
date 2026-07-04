@@ -16,6 +16,19 @@ from ..forms import AcaoForm
 from ..models import Acao, TipoAcao
 
 
+def _acoes_do_escopo(request):
+    """
+    Restringe às Ações da unidade do usuário, quando ele tiver uma unidade
+    definida. Usuários sem unidade (ex.: controladoria) veem todas — mitiga
+    o cenário de BOLA descrito no TCC (acessar objetos de outras unidades
+    orçamentárias apenas pelo identificador).
+    """
+    qs = Acao.objects.all()
+    if request.user.unidade:
+        qs = qs.filter(unidade=request.user.unidade)
+    return qs
+
+
 @login_required(login_url='Auth:login')
 @requer_permissao('acoes', 'ver')
 def lista_acoes(request):
@@ -30,7 +43,7 @@ def lista_acoes(request):
 
     ano_atual = datetime.date.today().year
 
-    qs_base = Acao.objects.select_related('tipo_acao', 'usuario')
+    qs_base = _acoes_do_escopo(request).select_related('tipo_acao', 'usuario')
     if q:
         qs_base = qs_base.filter(
             Q(tipo_acao__nome_acao__icontains=q) |
@@ -50,7 +63,7 @@ def lista_acoes(request):
         homologadas=Count('id', filter=Q(status='HOMOLOGADA')),
         atrasadas=Count('id', filter=Q(status='ATRASADA')),
     )
-    paint_ano = Acao.objects.filter(is_paint=True, data_execucao__year=ano_atual).count()
+    paint_ano = _acoes_do_escopo(request).filter(is_paint=True, data_execucao__year=ano_atual).count()
 
     qs = qs_base
     if tab == 'paint':
@@ -98,7 +111,7 @@ def exportar_csv_acoes(request):
     response['Content-Disposition'] = 'attachment; filename="acoes.csv"'
     writer = csv.writer(response)
     writer.writerow(['Identificação', 'Tipo', 'Unidade', 'Data de Execução', 'Responsável', 'Status', 'PAINT'])
-    qs = Acao.objects.select_related('tipo_acao', 'usuario').order_by('-data_execucao')
+    qs = _acoes_do_escopo(request).select_related('tipo_acao', 'usuario').order_by('-data_execucao')
     for a in qs:
         writer.writerow([
             a.identificacao_semantica,
@@ -133,7 +146,9 @@ def adicionar_acao(request):
 @login_required(login_url='Auth:login')
 def editar_acao(request, id_unico):
     acao = get_object_or_404(Acao, id_unico=id_unico)
-    if acao.usuario != request.user and not request.user.tem_permissao('acoes', 'editar'):
+    is_owner = acao.usuario == request.user
+    fora_do_escopo = request.user.unidade and acao.unidade != request.user.unidade
+    if not is_owner and (fora_do_escopo or not request.user.tem_permissao('acoes', 'editar')):
         return HttpResponseForbidden("Você não tem permissão para editar esta ação.")
     if request.method == 'POST':
         form = AcaoForm(request.POST, instance=acao)
@@ -151,7 +166,9 @@ def editar_acao(request, id_unico):
 @login_required(login_url='Auth:login')
 def excluir_acao(request, id_unico):
     acao = get_object_or_404(Acao, id_unico=id_unico)
-    if acao.usuario != request.user and not request.user.tem_permissao('acoes', 'excluir'):
+    is_owner = acao.usuario == request.user
+    fora_do_escopo = request.user.unidade and acao.unidade != request.user.unidade
+    if not is_owner and (fora_do_escopo or not request.user.tem_permissao('acoes', 'excluir')):
         return HttpResponseForbidden("Você não tem permissão para excluir esta ação.")
     if request.method == 'POST':
         acao.delete()
