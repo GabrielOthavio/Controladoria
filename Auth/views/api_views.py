@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.db.models import Count
@@ -26,8 +26,13 @@ def api_dashboard(request):
 @login_required(login_url='Auth:login')
 @require_GET
 def api_historico(request):
+    if not request.user.tem_permissao('usuarios', 'ver'):
+        return HttpResponseForbidden()
     from ..models import HistoricoAlteracoes
-    limit = min(int(request.GET.get('limit', 20)), 100)
+    try:
+        limit = max(1, min(int(request.GET.get('limit', 20)), 100))
+    except (ValueError, TypeError):
+        limit = 20
     qs = (
         HistoricoAlteracoes.objects
         .select_related('usuario')
@@ -35,12 +40,14 @@ def api_historico(request):
     )
     results = [
         {
-            'id':          str(h.id_unico),
-            'usuario':     (h.usuario.get_full_name() or h.usuario.username) if h.usuario else 'Sistema',
-            'tipo_objeto': h.tipo_objeto,
-            'operacao':    h.operacao,
-            'uuid_objeto': str(h.uuid_objeto) if h.uuid_objeto else None,
-            'data_hora':   h.data_hora_alteracao.strftime('%d/%m/%Y %H:%M'),
+            'id':               str(h.id_unico),
+            'usuario':          (h.usuario.get_full_name() or h.usuario.username) if h.usuario else 'Sistema',
+            'tipo_objeto':      h.tipo_objeto,
+            'operacao':         h.operacao,
+            'uuid_objeto':      str(h.uuid_objeto) if h.uuid_objeto else None,
+            'data_hora':        h.data_hora_alteracao.strftime('%d/%m/%Y %H:%M:%S'),
+            'estado_anterior':  h.estado_anterior,
+            'estado_posterior': h.estado_posterior,
         }
         for h in qs
     ]

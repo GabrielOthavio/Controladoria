@@ -100,26 +100,46 @@
     info:    'bi-info-circle-fill',
   };
 
-  function showToast(message, type) {
+  function showToast(message, type, opts) {
     var stack = document.getElementById('toast-stack');
     if (!stack) return;
     type = type || 'info';
+    opts = opts || {};
     var icon = TOAST_ICONS[type] || TOAST_ICONS.info;
     var toast = document.createElement('div');
     toast.className = 'toast toast-' + type;
-    toast.innerHTML =
-      '<i class="bi ' + icon + ' toast-icon"></i>' +
-      '<div class="toast-body">' + message + '</div>' +
-      '<button class="toast-close" aria-label="Fechar"><i class="bi bi-x"></i></button>';
-    toast.querySelector('.toast-close').addEventListener('click', function () {
+
+    var iconEl = document.createElement('i');
+    iconEl.className = 'bi ' + icon + ' toast-icon';
+
+    var bodyEl = document.createElement('div');
+    bodyEl.className = 'toast-body';
+    if (opts.raw) {
+      bodyEl.innerHTML = message;
+    } else {
+      bodyEl.textContent = message;
+    }
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.setAttribute('aria-label', 'Fechar');
+    var closeIcon = document.createElement('i');
+    closeIcon.className = 'bi bi-x';
+    closeBtn.appendChild(closeIcon);
+    closeBtn.addEventListener('click', function () {
       dismissToast(toast);
     });
+
+    toast.appendChild(iconEl);
+    toast.appendChild(bodyEl);
+    toast.appendChild(closeBtn);
     stack.appendChild(toast);
-    setTimeout(function () { dismissToast(toast); }, 4500);
+    toast._timer = setTimeout(function () { dismissToast(toast); }, 4500);
   }
 
   function dismissToast(toast) {
     if (!toast.parentNode) return;
+    clearTimeout(toast._timer);
     toast.classList.add('removing');
     toast.addEventListener('animationend', function () { toast.remove(); }, { once: true });
   }
@@ -142,9 +162,10 @@
     var gPressed = false, gTimer;
 
     document.addEventListener('keydown', function (e) {
-      var tag = document.activeElement.tagName;
+      var active = document.activeElement || {};
+      var tag = active.tagName;
       var editing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
-        document.activeElement.isContentEditable;
+        active.isContentEditable;
 
       /* Esc — close tweaks */
       if (e.key === 'Escape') {
@@ -175,7 +196,8 @@
         e.preventDefault();
         showToast(
           '<strong>Atalhos:</strong> N = novo registro &nbsp;·&nbsp; G+D = dashboard &nbsp;·&nbsp; G+A = ações &nbsp;·&nbsp; G+U = auditorias &nbsp;·&nbsp; G+I = índices',
-          'info'
+          'info',
+          { raw: true }
         );
         return;
       }
@@ -259,6 +281,36 @@
     });
   }
 
+  /* ===== Avatar dropdown ===== */
+  function initAvatarMenu() {
+    var menu     = document.getElementById('user-menu');
+    var btn      = document.getElementById('user-menu-btn');
+    var dropdown = document.getElementById('user-dropdown');
+    if (!menu || !btn || !dropdown) return;
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = dropdown.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      btn.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    dropdown.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    menu.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        dropdown.classList.remove('open');
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      }
+    });
+  }
+
   /* ===== Init ===== */
   document.addEventListener('DOMContentLoaded', function () {
     initSidebar();
@@ -268,6 +320,7 @@
     initShortcuts();
     initConfirm();
     initPagination();
+    initAvatarMenu();
   });
 
   window.showToast = showToast;

@@ -20,14 +20,10 @@
 </head>
 <body>
 <div id="root"></div>
+{{ current_user_data|json_script:"current-user-data" }}
 <script>
   window.CSRF_TOKEN = '{{ csrf_token }}';
-  window.CURRENT_USER = {
-    username: '{{ request.user.username }}',
-    fullName: '{{ request.user.get_full_name }}',
-    perfil:   '{{ request.user.perfil }}',
-    isChefe:  '{{ request.user.perfil }}' === 'CHEFE',
-  };
+  window.CURRENT_USER = JSON.parse(document.getElementById('current-user-data').textContent);
   window.APP_DEFAULTS = {
     theme:           'dark',
     density:         'compact',

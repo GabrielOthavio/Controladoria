@@ -1,0 +1,78 @@
+{% extends '_base_app.html' %}
+{% load static %}
+
+{% block title %}Excluir Perfil{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'Auth/css/perfis.css' %}">
+{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_perfis' %}">Perfis</a>
+<span class="sep">/</span>
+<span class="current">Excluir</span>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-page-wrap">
+  <div class="card confirm-perfil-card">
+
+    <div class="confirm-perfil-header">
+      <div class="confirm-alert-icon" aria-hidden="true">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+      <div>
+        <h1 style="font-size:var(--text-base);font-weight:600;margin:0;color:var(--fg)">Excluir Perfil</h1>
+        <p style="font-size:var(--text-xs);color:var(--fg-muted);margin:2px 0 0">Esta ação não pode ser desfeita.</p>
+      </div>
+    </div>
+
+    <div class="confirm-perfil-body">
+      <p class="confirm-perfil-name">{{ objeto.nome }}</p>
+      {% if objeto.descricao %}
+      <p class="confirm-perfil-msg">{{ objeto.descricao }}</p>
+      {% endif %}
+
+      <p class="confirm-perfil-msg" style="margin-top:var(--space-3)">
+        O perfil só pode ser excluído se não houver usuários ou perfis filhos vinculados.
+      </p>
+
+      <!-- Bloqueio se houver usuários vinculados -->
+      {% if objeto.usuarios.count %}
+      <div class="confirm-user-warning" role="alert">
+        <i class="bi bi-people-fill"></i>
+        <span>
+          <strong>{{ objeto.usuarios.count }} usuário{% if objeto.usuarios.count != 1 %}s{% endif %} vinculado{% if objeto.usuarios.count != 1 %}s{% endif %}.</strong>
+          Remova ou transfira os usuários antes de excluir este perfil.
+        </span>
+      </div>
+      {% endif %}
+
+      <!-- Bloqueio se houver filhos -->
+      {% if objeto.filhos.count %}
+      <div class="confirm-user-warning" role="alert">
+        <i class="bi bi-diagram-3-fill"></i>
+        <span>
+          <strong>{{ objeto.filhos.count }} perfil{% if objeto.filhos.count != 1 %}is{% endif %} filho{% if objeto.filhos.count != 1 %}s{% endif %}.</strong>
+          Exclua os perfis filhos antes de excluir este.
+        </span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="confirm-perfil-actions">
+      <a href="{% url 'Auth:lista_perfis' %}" class="btn btn-primary">
+        <i class="bi bi-arrow-left"></i> Cancelar
+      </a>
+      <form method="post" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger"
+                {% if objeto.usuarios.count or objeto.filhos.count %}disabled aria-disabled="true"{% endif %}>
+          <i class="bi bi-trash"></i> Confirmar Exclusão
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

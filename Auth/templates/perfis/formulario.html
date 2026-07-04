@@ -1,0 +1,226 @@
+{% extends '_base_app.html' %}
+{% load static %}
+{% load rbac_tags %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'Auth/css/perfis.css' %}">
+{% endblock %}
+
+{% block breadcrumb_trail %}
+<a href="{% url 'Auth:lista_perfis' %}">Perfis</a>
+<span class="sep">/</span>
+<span class="current">{{ titulo }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="perfil-title-row">
+      <h1 class="page-title">{{ titulo }}</h1>
+      <span class="dirty-badge" id="dirty-badge" hidden aria-live="polite">
+        <i class="bi bi-circle-fill" style="font-size:6px"></i>
+        Alterações não salvas
+      </span>
+    </div>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'Auth:lista_perfis' %}" class="btn btn-ghost">
+      <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<form method="post" id="perfil-form">
+{% csrf_token %}
+
+<!-- Dados do perfil -->
+<div class="card perfil-data-card">
+  <h2 style="font-size:var(--text-sm);font-weight:600;margin:0 0 var(--space-4);color:var(--fg)">Dados do Perfil</h2>
+
+  <div class="perfil-data-grid">
+    <div>
+      <label class="form-label" for="id_nome">Nome <span style="color:var(--danger)">*</span></label>
+      <input type="text" name="nome" id="id_nome" value="{{ perfil.nome|default:'' }}"
+             class="form-control" placeholder="ex.: Auditor Interno" required>
+    </div>
+    <div>
+      <label class="form-label" for="id_descricao">Descrição</label>
+      <input type="text" name="descricao" id="id_descricao" value="{{ perfil.descricao|default:'' }}"
+             class="form-control" placeholder="Descreva brevemente as atribuições deste perfil…">
+    </div>
+  </div>
+
+  <!-- Hierarquia -->
+  <div class="perfil-hierarchy">
+    <label class="form-label">
+      <i class="bi bi-diagram-3" style="color:var(--accent)"></i>
+      Perfil Pai
+      <span style="font-size:var(--text-xs);color:var(--fg-muted);font-weight:400">(opcional)</span>
+    </label>
+
+    <!-- Tree-select customizado -->
+    <div class="parent-select-wrap">
+      <button type="button"
+              class="parent-select-trigger"
+              id="parent-select-trigger"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="parent-popover">
+        <i class="bi bi-diagram-3" style="font-size:12px;color:var(--fg-muted);flex-shrink:0"></i>
+        <span class="parent-select-label {% if not perfil or not perfil.parent %}placeholder{% endif %}"
+              id="parent-select-label">
+          {% if perfil and perfil.parent %}{{ perfil.parent.nome }}{% else %}— Nível raiz (sem pai) —{% endif %}
+        </span>
+        <i class="bi bi-chevron-down parent-select-chevron"></i>
+      </button>
+
+      <input type="hidden" name="parent" id="parent-hidden-input"
+             value="{{ perfil.parent.id_unico|default:'' }}">
+
+      <div class="parent-popover" id="parent-popover" role="listbox" aria-label="Selecionar perfil pai">
+        <button type="button"
+                class="parent-item parent-item-none {% if not perfil or not perfil.parent_id %}selected{% endif %}"
+                data-value=""
+                data-label="— Nível raiz (sem pai) —"
+                style="--depth: 0"
+                role="option"
+                aria-selected="{% if not perfil or not perfil.parent_id %}true{% else %}false{% endif %}">
+          — Nível raiz (sem pai) —
+        </button>
+        {% for p in perfis_disponiveis %}
+        <button type="button"
+                class="parent-item {% if perfil and perfil.parent and perfil.parent.id_unico == p.id_unico %}selected{% endif %}"
+                data-value="{{ p.id_unico }}"
+                data-label="{{ p.nome }}"
+                style="--depth: {{ p.profundidade }}"
+                role="option"
+                aria-selected="{% if perfil and perfil.parent and perfil.parent.id_unico == p.id_unico %}true{% else %}false{% endif %}">
+          {% if p.profundidade > 0 %}
+          <i class="bi bi-arrow-return-right parent-item-depth-icon"></i>
+          {% endif %}
+          {{ p.nome }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <span class="perfil-hierarchy-hint">
+      Perfis filhos herdam visualmente as permissões, mas cada um possui sua própria matriz independente.
+    </span>
+  </div>
+</div>
+
+<!-- Matriz de permissões -->
+<div class="card perm-card">
+  <div class="perm-card-header">
+    <div>
+      <h2 class="perm-card-title">Permissões por Módulo</h2>
+      <p class="perm-card-subtitle">Defina o nível de acesso para cada área do sistema.</p>
+    </div>
+
+    <!-- Presets globais -->
+    <div class="perm-presets-bar">
+      <span class="perm-presets-label">Aplicar a todos:</span>
+      <button type="button" class="perm-preset-btn" data-preset="none">Sem acesso</button>
+      <button type="button" class="perm-preset-btn" data-preset="ver">Ver</button>
+      <button type="button" class="perm-preset-btn" data-preset="gerir">Gerir</button>
+      <button type="button" class="perm-preset-btn perm-preset-btn--full" data-preset="total">Total</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="min-width:160px">Módulo</th>
+          <th>
+            <div class="perm-level-header">
+              <span>Sem acesso</span>
+              <span>Ver</span>
+              <span>Gerir</span>
+              <span>Total</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for secao in telas_secoes %}
+        <tr class="perm-section-hdr">
+          <td colspan="2">{{ secao.secao }}</td>
+        </tr>
+        {% for code, label in secao.telas %}
+        {% with p=perms|get_item:code %}
+        <tr>
+          <td style="font-weight:500;font-size:var(--text-base);vertical-align:middle">{{ label }}</td>
+          <td style="padding:var(--space-2) var(--space-4);vertical-align:middle">
+
+            <!-- Hidden inputs — contrato com o backend inalterado -->
+            <input type="hidden" name="{{ code }}_ver"     class="h-ver"     data-row="{{ code }}"
+                   value="{% if p and p.pode_ver %}on{% endif %}">
+            <input type="hidden" name="{{ code }}_criar"   class="h-criar"   data-row="{{ code }}"
+                   value="{% if p and p.pode_criar %}on{% endif %}">
+            <input type="hidden" name="{{ code }}_editar"  class="h-editar"  data-row="{{ code }}"
+                   value="{% if p and p.pode_editar %}on{% endif %}">
+            <input type="hidden" name="{{ code }}_excluir" class="h-excluir" data-row="{{ code }}"
+                   value="{% if p and p.pode_excluir %}on{% endif %}">
+
+            <!-- Segmented control -->
+            <div class="seg-ctrl"
+                 role="radiogroup"
+                 aria-label="Nível de acesso para {{ label }}"
+                 data-row="{{ code }}"
+                 data-init-ver="{% if p and p.pode_ver %}1{% else %}0{% endif %}"
+                 data-init-criar="{% if p and p.pode_criar %}1{% else %}0{% endif %}"
+                 data-init-editar="{% if p and p.pode_editar %}1{% else %}0{% endif %}"
+                 data-init-excluir="{% if p and p.pode_excluir %}1{% else %}0{% endif %}">
+              <button type="button" role="radio" aria-checked="false"
+                      class="seg-btn seg-btn--none" data-level="none">
+                Sem acesso
+              </button>
+              <button type="button" role="radio" aria-checked="false"
+                      class="seg-btn seg-btn--ver" data-level="ver">
+                Ver
+              </button>
+              <button type="button" role="radio" aria-checked="false"
+                      class="seg-btn seg-btn--gerir" data-level="gerir">
+                Gerir
+              </button>
+              <button type="button" role="radio" aria-checked="false"
+                      class="seg-btn seg-btn--total" data-level="total">
+                Total
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Legenda -->
+  <div style="padding:var(--space-3) var(--space-4);border-top:1px solid var(--border);font-size:var(--text-xs);color:var(--fg-muted);display:flex;gap:var(--space-5);flex-wrap:wrap">
+    <span><strong style="color:var(--fg)">Sem acesso</strong> — nenhuma ação</span>
+    <span><strong style="color:var(--level-view-fg)">Ver</strong> — somente leitura</span>
+    <span><strong style="color:var(--level-manage-fg)">Gerir</strong> — ver + criar + editar</span>
+    <span><strong style="color:var(--level-full-fg)">Total</strong> — todas as ações, incluindo excluir</span>
+  </div>
+</div>
+
+<!-- Footer sticky -->
+<div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:var(--space-3) var(--space-4);display:flex;gap:var(--space-2);justify-content:flex-end;z-index:10;margin:0 -1px">
+  <a href="{% url 'Auth:lista_perfis' %}" class="btn btn-ghost">Cancelar</a>
+  <button type="submit" class="btn btn-primary">
+    <i class="bi bi-check-lg"></i> Salvar Perfil
+  </button>
+</div>
+
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'Auth/js/perfis.js' %}"></script>
+{% endblock %}

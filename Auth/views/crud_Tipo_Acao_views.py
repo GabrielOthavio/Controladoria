@@ -3,23 +3,18 @@
 # ===============================================
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+
+from ..decorators import requer_permissao, get_per_page
 from ..forms import TipoAcaoForm
 from ..models import TipoAcao
-from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
 def lista_tipos_acao(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()
     qs = TipoAcao.objects.all().order_by('nome_acao')
     if q:
@@ -36,9 +31,8 @@ def lista_tipos_acao(request):
     })
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('tipos_acao', 'criar')
 def adicionar_tipo_acao(request):
-    """Adiciona um novo Tipo de Ação."""
     if request.method == 'POST':
         form = TipoAcaoForm(request.POST)
         if form.is_valid():
@@ -50,9 +44,8 @@ def adicionar_tipo_acao(request):
     return render(request, 'tipos_acao/formulario.html', {'form': form, 'titulo': 'Adicionar Tipo de Ação'})
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('tipos_acao', 'editar')
 def editar_tipo_acao(request, id_unico):
-    """Edita um Tipo de Ação existente."""
     tipo_acao = get_object_or_404(TipoAcao, id_unico=id_unico)
     if request.method == 'POST':
         form = TipoAcaoForm(request.POST, instance=tipo_acao)
@@ -65,10 +58,8 @@ def editar_tipo_acao(request, id_unico):
     return render(request, 'tipos_acao/formulario.html', {'form': form, 'titulo': f'Editando "{tipo_acao.nome_acao}"'})
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('tipos_acao', 'excluir')
 def excluir_tipo_acao(request, id_unico):
-    """Exclui um Tipo de Ação."""
-    # ... (lógica da view continua a mesma)
     tipo_acao = get_object_or_404(TipoAcao, id_unico=id_unico)
     if request.method == 'POST':
         try:

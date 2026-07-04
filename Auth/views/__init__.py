@@ -8,3 +8,4 @@ from .crud_Usuario_views import *
 from .crud_Auditoria_views import *
 from .crud_MatrizAuditoria_views import *
 from .crud_EntidadeAuditoria_views import *
+from .crud_Perfil_views import *

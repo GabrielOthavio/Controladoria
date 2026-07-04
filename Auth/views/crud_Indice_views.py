@@ -7,19 +7,15 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+
+from ..decorators import requer_permissao, get_per_page
 from ..forms import IndiceForm
 from ..models import Indice
-from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
+@requer_permissao('indices', 'ver')
 def lista_indices(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()
     qs = Indice.objects.select_related('tipo_indice').order_by('-ano', '-mes')
     if q:
@@ -37,6 +33,7 @@ def lista_indices(request):
     return render(request, 'indices/lista.html', context)
 
 @login_required(login_url='Auth:login')
+@requer_permissao('indices', 'criar')
 def adicionar_indice(request):
     """ Processa o formulário para adicionar um novo Índice. """
     if request.method == 'POST':
@@ -56,6 +53,7 @@ def adicionar_indice(request):
     return render(request, 'indices/formulario.html', context)
 
 @login_required(login_url='Auth:login')
+@requer_permissao('indices', 'editar')
 def editar_indice(request, id_unico):
     """ Processa o formulário para editar um Índice existente. """
     indice = get_object_or_404(Indice, id_unico=id_unico)
@@ -77,6 +75,7 @@ def editar_indice(request, id_unico):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('indices', 'excluir')
 def excluir_indice(request, id_unico):
     """ Exibe a confirmação e processa a exclusão de um Índice. """
     indice = get_object_or_404(Indice, id_unico=id_unico)

@@ -1,4 +1,5 @@
 {% extends '_base_app.html' %}
+{% load rbac_tags %}
 
 {% block title %}Gerenciar — {{ auditoria.nome_auditoria }}{% endblock %}
 
@@ -9,6 +10,8 @@
 {% endblock %}
 
 {% block content %}
+{% pode request.user 'auditorias' 'editar' as can_editar %}
+{% pode request.user 'auditorias' 'excluir' as can_excluir %}
 <div class="page-head">
   <div>
     <h1 class="page-title">{{ auditoria.nome_auditoria }}</h1>
@@ -20,7 +23,7 @@
       {% elif auditoria.status == 'CANCELADA' %}<span class="badge badge-danger">Cancelada</span>{% endif %}
     </p>
   </div>
-  {% if request.user.perfil == 'CHEFE' %}
+  {% if can_editar %}
   <div class="page-actions">
     <a href="{% url 'Auth:editar_auditoria' id_unico=auditoria.id_unico %}" class="btn btn-ghost">
       <i class="bi bi-pencil"></i> Editar
@@ -54,9 +57,8 @@
   {% endif %}
 </div>
 
-{% if request.user.perfil == 'CHEFE' %}
+{% if can_editar %}
   {% if auditoria.status == 'PLANEJADA' %}
-  <!-- Golfo de Execução: torna óbvio o próximo passo sem obrigar navegar pelo formulário -->
   <p class="pipeline-hint">
     <i class="bi bi-arrow-right-circle"></i>
     Próxima etapa: <strong>Em Andamento</strong> —
@@ -126,7 +128,7 @@
 <div class="card" style="border-top-left-radius:0">
   <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
     <span class="card-title">Etapas da Auditoria</span>
-    {% if request.user.perfil == 'CHEFE' %}
+    {% if can_editar %}
     <a href="{% url 'Auth:adicionar_etapa' id_unico=auditoria.id_unico %}" class="btn btn-primary btn-sm">
       <i class="bi bi-plus"></i> Adicionar Etapa
     </a>
@@ -145,7 +147,7 @@
           <th>Método</th>
           <th>Situação</th>
           <th>Achados</th>
-          {% if request.user.perfil == 'CHEFE' %}<th class="col-actions">Ações</th>{% endif %}
+          {% if can_editar %}<th class="col-actions">Ações</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -177,7 +179,7 @@
             {% endif %}
             {% endwith %}
           </td>
-          {% if request.user.perfil == 'CHEFE' %}
+          {% if can_editar %}
           <td class="col-actions">
             <a href="{% url 'Auth:editar_etapa' id_unico=auditoria.id_unico etapa_id=etapa.id_unico %}" class="btn btn-ghost btn-sm" title="Editar">
               <i class="bi bi-pencil"></i>
@@ -190,9 +192,11 @@
               </button>
             </form>
             {% endif %}
+            {% if can_excluir %}
             <a href="{% url 'Auth:excluir_etapa' id_unico=auditoria.id_unico etapa_id=etapa.id_unico %}" class="btn btn-ghost btn-sm text-danger" title="Excluir">
               <i class="bi bi-trash"></i>
             </a>
+            {% endif %}
           </td>
           {% endif %}
         </tr>
@@ -205,7 +209,7 @@
     <div class="empty-icon"><i class="bi bi-list-check"></i></div>
     <p class="empty-title">Nenhuma etapa cadastrada</p>
     <p class="empty-msg">Adicione a primeira etapa para começar o acompanhamento.</p>
-    {% if request.user.perfil == 'CHEFE' %}
+    {% if can_editar %}
     <a href="{% url 'Auth:adicionar_etapa' id_unico=auditoria.id_unico %}" class="btn btn-primary">
       <i class="bi bi-plus"></i> Adicionar Etapa
     </a>
@@ -235,11 +239,7 @@
           <td><span class="cell-primary">{{ u.get_full_name|default:u.username }}</span></td>
           <td style="font-family:var(--font-mono);font-size:12px;color:var(--fg-muted)">{{ u.username }}</td>
           <td>
-            {% if u.perfil == 'CHEFE' %}
-              <span class="badge badge-warning">Chefe</span>
-            {% else %}
-              <span class="badge">Funcionário</span>
-            {% endif %}
+            <span class="badge">{{ u.perfil.nome|default:"—" }}</span>
           </td>
         </tr>
         {% endfor %}

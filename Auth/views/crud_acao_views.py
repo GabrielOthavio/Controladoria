@@ -10,18 +10,15 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+
+from ..decorators import requer_permissao, get_per_page
 from ..forms import AcaoForm
 from ..models import Acao, TipoAcao
 
 
 @login_required(login_url='Auth:login')
 def lista_acoes(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
 
     q       = request.GET.get('q', '').strip()
     tab     = request.GET.get('tab', 'todas')
@@ -44,14 +41,14 @@ def lista_acoes(request):
     if unidade:
         qs_base = qs_base.filter(unidade=unidade)
 
-    tab_counts = {
-        'total':    qs_base.count(),
-        'paint':    qs_base.filter(is_paint=True).count(),
-        'em_andamento':      qs_base.filter(status='EM_ANDAMENTO').count(),
-        'aguardando_revisao': qs_base.filter(status='AGUARDANDO_REVISAO').count(),
-        'homologadas': qs_base.filter(status='HOMOLOGADA').count(),
-        'atrasadas':   qs_base.filter(status='ATRASADA').count(),
-    }
+    tab_counts = qs_base.aggregate(
+        total=Count('id'),
+        paint=Count('id', filter=Q(is_paint=True)),
+        em_andamento=Count('id', filter=Q(status='EM_ANDAMENTO')),
+        aguardando_revisao=Count('id', filter=Q(status='AGUARDANDO_REVISAO')),
+        homologadas=Count('id', filter=Q(status='HOMOLOGADA')),
+        atrasadas=Count('id', filter=Q(status='ATRASADA')),
+    )
     paint_ano = Acao.objects.filter(is_paint=True, data_execucao__year=ano_atual).count()
 
     qs = qs_base
@@ -71,6 +68,10 @@ def lista_acoes(request):
     paginator = Paginator(qs, per_page)
     page_obj  = paginator.get_page(request.GET.get('page', 1))
 
+    extra = f'&tab={tab}&sort={sort}'
+    if unidade:
+        extra += f'&unidade={unidade}'
+
     context = {
         'acoes':      page_obj,
         'page_obj':   page_obj,
@@ -84,11 +85,13 @@ def lista_acoes(request):
         'paint_ano':  paint_ano,
         'ano_atual':  ano_atual,
         'unidade_choices': Acao.UNIDADE_CHOICES,
+        'extra_query': extra,
     }
     return render(request, 'acoes/lista.html', context)
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('acoes', 'ver')
 def exportar_csv_acoes(request):
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
     response['Content-Disposition'] = 'attachment; filename="acoes.csv"'
@@ -109,6 +112,7 @@ def exportar_csv_acoes(request):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('acoes', 'criar')
 def adicionar_acao(request):
     if request.method == 'POST':
         form = AcaoForm(request.POST)
@@ -128,7 +132,7 @@ def adicionar_acao(request):
 @login_required(login_url='Auth:login')
 def editar_acao(request, id_unico):
     acao = get_object_or_404(Acao, id_unico=id_unico)
-    if acao.usuario != request.user and request.user.perfil != 'CHEFE':
+    if acao.usuario != request.user and not request.user.tem_permissao('acoes', 'editar'):
         return HttpResponseForbidden("Você não tem permissão para editar esta ação.")
     if request.method == 'POST':
         form = AcaoForm(request.POST, instance=acao)
@@ -146,7 +150,7 @@ def editar_acao(request, id_unico):
 @login_required(login_url='Auth:login')
 def excluir_acao(request, id_unico):
     acao = get_object_or_404(Acao, id_unico=id_unico)
-    if acao.usuario != request.user and request.user.perfil != 'CHEFE':
+    if acao.usuario != request.user and not request.user.tem_permissao('acoes', 'excluir'):
         return HttpResponseForbidden("Você não tem permissão para excluir esta ação.")
     if request.method == 'POST':
         acao.delete()

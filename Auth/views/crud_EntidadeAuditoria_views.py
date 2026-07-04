@@ -1,20 +1,16 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+
+from ..decorators import requer_permissao, get_per_page
 from ..forms import EntidadeAuditoriaForm
 from ..models import EntidadeAuditoria
 
 
 @login_required(login_url='Auth:login')
 def lista_entidades(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()
     qs = EntidadeAuditoria.objects.order_by('nome')
     if q:
@@ -32,9 +28,8 @@ def lista_entidades(request):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('entidades', 'criar')
 def adicionar_entidade(request):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem cadastrar entidades.")
     if request.method == 'POST':
         form = EntidadeAuditoriaForm(request.POST)
         if form.is_valid():
@@ -47,9 +42,8 @@ def adicionar_entidade(request):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('entidades', 'editar')
 def editar_entidade(request, id_unico):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem editar entidades.")
     entidade = get_object_or_404(EntidadeAuditoria, id_unico=id_unico)
     if request.method == 'POST':
         form = EntidadeAuditoriaForm(request.POST, instance=entidade)
@@ -63,9 +57,8 @@ def editar_entidade(request, id_unico):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('entidades', 'excluir')
 def excluir_entidade(request, id_unico):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem excluir entidades.")
     entidade = get_object_or_404(EntidadeAuditoria, id_unico=id_unico)
     if request.method == 'POST':
         entidade.delete()

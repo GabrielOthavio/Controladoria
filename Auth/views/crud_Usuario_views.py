@@ -2,26 +2,20 @@
 # ==            CRUDS PARA USUÁRIO            ==
 # ===============================================
 
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
 from django.contrib import messages
 
+from ..decorators import requer_permissao, get_per_page
 from ..forms import AdminUserCreationForm, CustomUserChangeForm
 from ..models import Usuario
-from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('usuarios', 'ver')
 def lista_usuarios(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()
     qs = Usuario.objects.all().order_by('first_name')
     if q:
@@ -41,11 +35,8 @@ def lista_usuarios(request):
     })
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('usuarios', 'criar')
 def adicionar_usuario(request):
-    """
-    Processa o formulário para adicionar um novo Usuário.
-    """
     if request.method == 'POST':
         form = AdminUserCreationForm(request.POST)
         if form.is_valid():
@@ -58,11 +49,8 @@ def adicionar_usuario(request):
     return render(request, 'usuarios/formulario.html', context)
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('usuarios', 'editar')
 def editar_usuario(request, id_unico):
-    """
-    Processa o formulário para editar um Usuário existente.
-    """
     usuario = get_object_or_404(Usuario, id_unico=id_unico)
     if request.method == 'POST':
         form = CustomUserChangeForm(request.POST, instance=usuario)
@@ -76,11 +64,8 @@ def editar_usuario(request, id_unico):
     return render(request, 'usuarios/formulario.html', context)
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('usuarios', 'excluir')
 def excluir_usuario(request, id_unico):
-    """
-    Exibe a confirmação e processa a exclusão de um Usuário.
-    """
     usuario = get_object_or_404(Usuario, id_unico=id_unico)
     if request.method == 'POST':
         usuario.delete()

@@ -1,0 +1,493 @@
+/* ===== Perfis Module — feature CSS ===== */
+
+/* =====================================================
+   LISTA — Árvore hierárquica
+   ===================================================== */
+
+.tree-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  padding-left: calc(var(--depth, 0) * 28px + var(--space-4));
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  transition: background var(--transition);
+}
+.tree-row:hover { background: var(--bg-hover); }
+.tree-row:last-child { border-bottom: 0; }
+
+/* Linha vertical de conexão (só depth > 0) */
+.tree-connector-v {
+  position: absolute;
+  left: calc(var(--depth, 0) * 28px);
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+/* Gancho horizontal */
+.tree-connector-h {
+  position: absolute;
+  left: calc(var(--depth, 0) * 28px);
+  top: 22px;
+  width: 12px; height: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+/* Toggle — placeholder 20 px mantém alinhamento mesmo sem filhos */
+.tree-toggle-cell {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 6px;
+}
+.tree-toggle {
+  width: 20px; height: 20px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: 10px;
+  transition: background var(--transition), color var(--transition);
+}
+.tree-toggle:hover { background: var(--bg-hover); color: var(--fg); }
+.tree-toggle[aria-hidden="true"] { visibility: hidden; pointer-events: none; }
+.tree-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Ícone de nível */
+.tree-level-icon {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+/* Bloco de conteúdo principal */
+.tree-content { flex: 1; min-width: 0; }
+.tree-name-row {
+  display: flex; align-items: center; gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.tree-name {
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+.tree-user-count {
+  font-size: var(--text-xs);
+  color: var(--accent);
+  font-weight: 600;
+}
+.tree-desc {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  margin-top: 2px;
+}
+
+/* Tira de dots de permissão */
+.perm-dots {
+  display: flex; gap: 3px;
+  margin-top: var(--space-2);
+  align-items: center;
+}
+.perm-dot {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  cursor: default;
+  transition: transform var(--transition);
+}
+.perm-dot:hover { transform: scale(1.4); }
+.perm-dot--full   { background: var(--level-full-fg); }
+.perm-dot--manage { background: var(--level-manage-fg); }
+.perm-dot--view   { background: var(--level-view-fg); }
+.perm-dot--none   { background: transparent; border: 1px solid var(--border); }
+
+/* Botões de ação — visíveis só em hover/focus-within */
+.tree-actions {
+  flex-shrink: 0;
+  display: flex; gap: 4px; align-items: center;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.tree-row:hover .tree-actions,
+.tree-row:focus-within .tree-actions { opacity: 1; }
+
+/* Legenda via popover */
+.legend-wrap { position: relative; display: inline-flex; }
+.legend-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  display: grid; place-items: center;
+  line-height: 1;
+  font-family: inherit;
+  transition: background var(--transition), color var(--transition);
+}
+.legend-btn:hover { background: var(--bg-hover); color: var(--fg); }
+.legend-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.legend-popover {
+  position: absolute;
+  bottom: calc(100% + 8px); right: 0;
+  width: 232px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-3) var(--space-4);
+  z-index: 50;
+  display: none;
+}
+.legend-popover.open { display: block; }
+.legend-popover-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0 0 var(--space-2);
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 5px;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.legend-hint {
+  font-size: 10px;
+  color: var(--fg-subtle);
+  margin-top: var(--space-2);
+}
+
+
+/* =====================================================
+   FORMULÁRIO — Dados do perfil
+   ===================================================== */
+
+.perfil-data-card {
+  margin-bottom: var(--space-4);
+  padding: var(--space-6);
+}
+.perfil-data-grid {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+@media (max-width: 720px) {
+  .perfil-data-grid { grid-template-columns: 1fr; }
+}
+.perfil-hierarchy {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+}
+.perfil-hierarchy-hint {
+  font-size: var(--text-xs);
+  color: var(--fg-subtle);
+  margin-top: 6px;
+  display: block;
+}
+
+
+/* =====================================================
+   FORMULÁRIO — Matriz de permissões
+   ===================================================== */
+
+.perm-card { margin-bottom: var(--space-4); }
+.perm-card-header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.perm-card-title { font-size: var(--text-base); font-weight: 600; color: var(--fg); margin: 0; }
+.perm-card-subtitle { font-size: var(--text-xs); color: var(--fg-muted); margin: 3px 0 0; }
+
+/* Barra de presets */
+.perm-presets-bar {
+  display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;
+}
+.perm-presets-label {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+.perm-preset-btn {
+  height: 28px; padding: 0 var(--space-3);
+  font-size: var(--text-xs); font-weight: 500;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  color: var(--fg-muted);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.perm-preset-btn:hover { background: var(--bg-hover); color: var(--fg); }
+.perm-preset-btn--full {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.perm-preset-btn--full:hover { background: var(--level-full-bg); }
+.perm-preset-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Cabeçalho de seção na tabela */
+.perm-section-hdr td {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-subtle);
+  background: var(--bg-sunken);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Segmented control */
+.seg-ctrl {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.seg-btn {
+  width: 88px;
+  padding: 7px 0;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  font-family: inherit;
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), font-weight var(--transition);
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+}
+.seg-btn:last-child { border-right: none; }
+
+/* Tinte sutil em inativo — gradiente de risco visual */
+.seg-btn--none   { background: var(--bg-sunken);       color: var(--fg-subtle); }
+.seg-btn--ver    { background: var(--level-view-bg);   color: var(--level-view-fg); }
+.seg-btn--gerir  { background: var(--level-manage-bg); color: var(--level-manage-fg); }
+.seg-btn--total  { background: var(--level-full-bg);   color: var(--level-full-fg); }
+
+/* Ativo — fill sólido */
+.seg-btn--none[aria-checked="true"]  { background: var(--fg-subtle);  color: var(--bg-elev); font-weight: 600; }
+.seg-btn--ver[aria-checked="true"]   { background: var(--success);    color: #fff; font-weight: 600; }
+.seg-btn--gerir[aria-checked="true"] { background: var(--warning);    color: oklch(0.18 0.005 240); font-weight: 600; }
+.seg-btn--total[aria-checked="true"] { background: var(--accent);     color: var(--accent-fg); font-weight: 600; }
+
+/* Ícone de check no estado ativo */
+.seg-btn[aria-checked="true"]::before {
+  content: '✓';
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+.seg-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  z-index: 1;
+  position: relative;
+}
+
+/* Coluna de nível no thead */
+.perm-level-header {
+  display: flex; gap: 0;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  font-weight: 400;
+}
+.perm-level-header span {
+  width: 88px; text-align: center;
+}
+.perm-level-header span:last-child { width: 88px; }
+
+
+/* =====================================================
+   FORMULÁRIO — Tree-select de pai
+   ===================================================== */
+
+.parent-select-wrap { position: relative; max-width: 360px; }
+
+.parent-select-trigger {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-base);
+  color: var(--fg);
+  font-family: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  text-align: left;
+}
+.parent-select-trigger:hover { border-color: var(--border-strong); }
+.parent-select-trigger[aria-expanded="true"],
+.parent-select-trigger:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.2);
+  outline: none;
+}
+.parent-select-label {
+  flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--fg);
+}
+.parent-select-label.placeholder { color: var(--fg-subtle); }
+.parent-select-chevron {
+  color: var(--fg-muted);
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+.parent-select-trigger[aria-expanded="true"] .parent-select-chevron { transform: rotate(180deg); }
+
+.parent-popover {
+  position: absolute;
+  top: calc(100% + 4px); left: 0;
+  width: 360px; max-height: 260px;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 60;
+  display: none;
+}
+.parent-popover.open { display: block; }
+
+.parent-item {
+  width: 100%;
+  padding: 7px 12px;
+  padding-left: calc(12px + var(--depth, 0) * 20px);
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--text-base);
+  color: var(--fg-muted);
+  background: none; border: none;
+  cursor: pointer; text-align: left;
+  font-family: inherit;
+  transition: background var(--transition), color var(--transition);
+}
+.parent-item:hover { background: var(--bg-hover); color: var(--fg); }
+.parent-item.selected { color: var(--accent); font-weight: 500; background: var(--level-full-bg); }
+.parent-item-none { font-style: italic; color: var(--fg-subtle); }
+.parent-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.parent-item-depth-icon { color: var(--fg-subtle); font-size: 10px; flex-shrink: 0; }
+
+
+/* =====================================================
+   FORMULÁRIO — Dirty badge + footer sticky
+   ===================================================== */
+
+.perfil-title-row {
+  display: flex; align-items: center; gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.dirty-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--level-manage-fg);
+  background: var(--level-manage-bg);
+  border: 1px solid var(--level-manage-fg);
+  animation: badge-in 0.15s ease;
+}
+@keyframes badge-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: none; }
+}
+
+
+/* =====================================================
+   CONFIRMAR EXCLUSÃO
+   ===================================================== */
+
+.confirm-page-wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--space-8);
+}
+
+.confirm-perfil-card {
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-md);
+}
+
+.confirm-perfil-header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: var(--space-3);
+}
+
+.confirm-alert-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--danger-bg);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--danger);
+}
+
+.confirm-perfil-body { padding: var(--space-5) var(--space-6); }
+
+.confirm-perfil-name {
+  font-weight: 600;
+  font-size: var(--text-lg);
+  color: var(--fg);
+  margin: 0 0 var(--space-2);
+}
+
+.confirm-perfil-msg {
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.confirm-user-warning {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  margin-top: var(--space-4);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border: 1px solid oklch(from var(--danger) l c h / 0.25);
+}
+.confirm-user-warning i { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+.confirm-perfil-actions {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: var(--space-2);
+}

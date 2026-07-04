@@ -9,7 +9,80 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.conf import settings
+from django.utils.functional import cached_property
 from encrypted_model_fields.fields import EncryptedCharField
+
+
+# ---------------------------------------------------------------------------
+# RBAC — Perfis e Permissões
+# ---------------------------------------------------------------------------
+
+TELA_CHOICES = [
+    ('dashboard',     'Dashboard'),
+    ('acoes',         'Ações'),
+    ('indices',       'Índices'),
+    ('tipos_acao',    'Tipos de Ação'),
+    ('tipos_indice',  'Tipos de Índice'),
+    ('grupos_indice', 'Grupos de Índice'),
+    ('auditorias',    'Auditorias'),
+    ('matrizes',      'Matrizes de Auditoria'),
+    ('entidades',     'Entidades de Auditoria'),
+    ('usuarios',      'Usuários'),
+    ('perfis',        'Perfis'),
+]
+
+
+class Perfil(models.Model):
+    id_unico  = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    nome      = models.CharField(max_length=100, unique=True, verbose_name='Nome')
+    descricao = models.TextField(blank=True, default='', verbose_name='Descrição')
+    parent    = models.ForeignKey(
+        'self', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='filhos',
+        verbose_name='Perfil Pai',
+    )
+
+    class Meta:
+        verbose_name = 'Perfil'
+        verbose_name_plural = 'Perfis'
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
+    @cached_property
+    def _permissoes_dict(self):
+        return {p.tela: p for p in self.permissoes.all()}
+
+    def tem_permissao(self, tela, acao='ver'):
+        perm = self._permissoes_dict.get(tela)
+        return bool(getattr(perm, f'pode_{acao}', False)) if perm else False
+
+    def profundidade(self):
+        depth, current, visitados = 0, self, {self.pk}
+        while current.parent_id and current.parent_id not in visitados:
+            depth += 1
+            visitados.add(current.parent_id)
+            current = current.parent
+        return depth
+
+
+class PerfilPermissao(models.Model):
+    perfil       = models.ForeignKey(Perfil, on_delete=models.CASCADE, related_name='permissoes')
+    tela         = models.CharField(max_length=30, choices=TELA_CHOICES, verbose_name='Tela')
+    pode_ver     = models.BooleanField(default=False, verbose_name='Ver')
+    pode_criar   = models.BooleanField(default=False, verbose_name='Criar')
+    pode_editar  = models.BooleanField(default=False, verbose_name='Editar')
+    pode_excluir = models.BooleanField(default=False, verbose_name='Excluir')
+
+    class Meta:
+        verbose_name = 'Permissão'
+        verbose_name_plural = 'Permissões'
+        unique_together = ('perfil', 'tela')
+
+    def __str__(self):
+        return f'{self.perfil.nome} → {self.get_tela_display()}'
 
 
 # ---------------------------------------------------------------------------
@@ -17,15 +90,23 @@ from encrypted_model_fields.fields import EncryptedCharField
 # ---------------------------------------------------------------------------
 
 class Usuario(AbstractUser):
-    id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    PERFIL_CHOICES = (('CHEFE', 'Chefe'), ('FUNCIONARIO', 'Funcionário'))
-    cpf = EncryptedCharField(max_length=14, unique=True, verbose_name="CPF")
-    telefone = models.CharField(max_length=15, blank=True, null=True)
-    rua = models.CharField(max_length=255, blank=True, null=True)
-    bairro = models.CharField(max_length=100, blank=True, null=True)
-    numero = models.CharField(max_length=10, blank=True, null=True)
-    cep = models.CharField(max_length=9, blank=True, null=True)
-    perfil = models.CharField(max_length=11, choices=PERFIL_CHOICES, default='FUNCIONARIO')
+    id_unico  = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    cpf       = EncryptedCharField(max_length=14, unique=True, verbose_name="CPF")
+    telefone  = models.CharField(max_length=15, blank=True, null=True)
+    rua       = models.CharField(max_length=255, blank=True, null=True)
+    bairro    = models.CharField(max_length=100, blank=True, null=True)
+    numero    = models.CharField(max_length=10, blank=True, null=True)
+    cep       = models.CharField(max_length=9, blank=True, null=True)
+    perfil    = models.ForeignKey(
+        'Perfil', on_delete=models.PROTECT,
+        null=True, blank=True,
+        verbose_name='Perfil', related_name='usuarios'
+    )
+
+    def tem_permissao(self, tela, acao='ver'):
+        if not self.perfil_id:
+            return False
+        return self.perfil.tem_permissao(tela, acao)
 
     class Meta:
         verbose_name = "Usuário"
@@ -133,6 +214,7 @@ class Acao(models.Model):
         if not self.id_por_tipo_acao:
             from django.db import transaction
             with transaction.atomic():
+                TipoAcao.objects.select_for_update().get(pk=self.tipo_acao_id)
                 ultimo = (
                     Acao.objects.select_for_update()
                     .filter(tipo_acao=self.tipo_acao)
@@ -199,7 +281,6 @@ class MatrizAuditoria(models.Model):
         null=True, blank=True, verbose_name="Entidade da matriz de auditoria"
     )
     observacoes = models.TextField(blank=True, default='', verbose_name="Observações adicionais da matriz de auditoria")
-
     class Meta:
         verbose_name = "Matriz de Auditoria"
         verbose_name_plural = "Matrizes de Auditoria"
@@ -207,8 +288,6 @@ class MatrizAuditoria(models.Model):
 
     def __str__(self):
         return self.descricao
-
-
 class Auditoria(models.Model):
     STATUS_CHOICES = [
         ('PLANEJADA',    'Planejada'),
@@ -312,6 +391,7 @@ class HistoricoAlteracoes(models.Model):
         'Usuario', on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name="Usuário"
     )
+    
     data_hora_alteracao = models.DateTimeField(auto_now_add=True, verbose_name="Data e Hora da Alteração")
     operacao = models.CharField(max_length=10, choices=OPERACAO_CHOICES, default='ATUALIZADO', verbose_name="Operação")
     tipo_objeto = models.CharField(max_length=100, verbose_name="Tipo do Objeto")
@@ -380,21 +460,25 @@ class Relatorio(models.Model):
 # ---------------------------------------------------------------------------
 
 MODELOS_AUDITAVEIS = [
-    Usuario, TipoAcao, GrupoIndice, TipoIndice, Acao, Indice,
+    Usuario, Perfil, PerfilPermissao,
+    TipoAcao, GrupoIndice, TipoIndice, Acao, Indice,
     EntidadeAuditoria, MatrizAuditoria, Auditoria, ConfiguracaoSistema,
     Etapa, Achado,
 ]
 
 
+CAMPOS_SENSIVEIS = {'password', 'last_login', 'email', 'telefone', 'rua', 'bairro', 'numero', 'cep'}
+
+
 def _serializar_instancia(instance):
     """
     Retorna um dict com os campos escalares do modelo.
-    Campos EncryptedCharField são marcados como [PROTEGIDO] para não expor
-    dados sensíveis no log de auditoria.
+    Campos EncryptedCharField e CAMPOS_SENSIVEIS são marcados como [PROTEGIDO]
+    para não expor dados sensíveis no log de auditoria.
     """
     resultado = {}
     for field in instance._meta.concrete_fields:
-        if isinstance(field, EncryptedCharField):
+        if isinstance(field, EncryptedCharField) or field.name in CAMPOS_SENSIVEIS:
             resultado[field.name] = '[PROTEGIDO]'
             continue
         value = field.value_from_object(instance)
@@ -427,13 +511,17 @@ def _capturar_estado_anterior(sender, instance, **kwargs):
 def _registrar_auditoria(sender, instance, created, **kwargs):
     if sender not in MODELOS_AUDITAVEIS:
         return
+    estado_anterior = getattr(instance, '_auditoria_estado_anterior', None)
+    estado_posterior = _serializar_instancia(instance)
+    if not created and estado_anterior == estado_posterior:
+        return
     from Auth.middleware import get_current_user
     usuario = get_current_user()
     HistoricoAlteracoes.objects.create(
         operacao='CRIADO' if created else 'ATUALIZADO',
         tipo_objeto=sender.__name__,
         uuid_objeto=getattr(instance, 'id_unico', None),
-        estado_anterior=getattr(instance, '_auditoria_estado_anterior', None),
-        estado_posterior=_serializar_instancia(instance),
+        estado_anterior=estado_anterior,
+        estado_posterior=estado_posterior,
         usuario=usuario if usuario and getattr(usuario, 'is_authenticated', False) else None,
     )

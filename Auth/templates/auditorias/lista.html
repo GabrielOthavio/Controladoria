@@ -1,4 +1,5 @@
 {% extends '_base_app.html' %}
+{% load rbac_tags %}
 
 {% block title %}Auditorias{% endblock %}
 
@@ -7,6 +8,8 @@
 {% endblock %}
 
 {% block content %}
+{% pode request.user 'auditorias' 'criar' as can_criar %}
+{% pode request.user 'auditorias' 'editar' as can_editar %}
 <div class="page-head">
   <div>
     <h1 class="page-title">Auditorias</h1>
@@ -15,7 +18,7 @@
     </p>
   </div>
   <div class="page-actions">
-    {% if request.user.perfil == 'CHEFE' %}
+    {% if can_criar %}
     <a href="{% url 'Auth:adicionar_auditoria' %}" class="btn btn-primary" data-shortcut-new title="Atalho: N">
       <i class="bi bi-plus"></i> Nova Auditoria
     </a>
@@ -43,23 +46,23 @@
     <!-- Abas de filtro -->
     <nav class="filter-tabs" style="flex:1;overflow-x:auto">
       {% url 'Auth:lista_auditorias' as base_url %}
-      <a href="{{ base_url }}?per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+      <a href="{{ base_url }}?per_page={{ per_page }}{% if q %}&q={{ q|urlencode }}{% endif %}"
          class="filter-tab {% if not status_filter %}active{% endif %}">
         Todas <span class="tab-count">{{ tab_counts.total }}</span>
       </a>
-      <a href="{{ base_url }}?status=PLANEJADA&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+      <a href="{{ base_url }}?status=PLANEJADA&per_page={{ per_page }}{% if q %}&q={{ q|urlencode }}{% endif %}"
          class="filter-tab {% if status_filter == 'PLANEJADA' %}active{% endif %}">
         Planejadas <span class="tab-count">{{ tab_counts.planejada }}</span>
       </a>
-      <a href="{{ base_url }}?status=EM_ANDAMENTO&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+      <a href="{{ base_url }}?status=EM_ANDAMENTO&per_page={{ per_page }}{% if q %}&q={{ q|urlencode }}{% endif %}"
          class="filter-tab {% if status_filter == 'EM_ANDAMENTO' %}active{% endif %}">
         Em andamento <span class="tab-count">{{ tab_counts.em_andamento }}</span>
       </a>
-      <a href="{{ base_url }}?status=CONCLUIDA&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+      <a href="{{ base_url }}?status=CONCLUIDA&per_page={{ per_page }}{% if q %}&q={{ q|urlencode }}{% endif %}"
          class="filter-tab {% if status_filter == 'CONCLUIDA' %}active{% endif %}">
         Concluídas <span class="tab-count">{{ tab_counts.concluida }}</span>
       </a>
-      <a href="{{ base_url }}?status=CANCELADA&per_page={{ per_page }}{% if q %}&q={{ q }}{% endif %}"
+      <a href="{{ base_url }}?status=CANCELADA&per_page={{ per_page }}{% if q %}&q={{ q|urlencode }}{% endif %}"
          class="filter-tab {% if status_filter == 'CANCELADA' %}active{% endif %}">
         Canceladas <span class="tab-count">{{ tab_counts.cancelada }}</span>
       </a>
@@ -109,15 +112,18 @@
             <a href="{% url 'Auth:gerenciar_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm">
               <i class="bi bi-gear"></i> Gerenciar
             </a>
-            {% if request.user.perfil == 'CHEFE' %}
+            {% if can_editar %}
             <span style="display:inline-flex;align-items:center;gap:2px;border-left:1px solid var(--border);margin-left:4px;padding-left:4px">
               <a href="{% url 'Auth:editar_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm" title="Editar">
                 <i class="bi bi-pencil"></i>
               </a>
+              {% pode request.user 'auditorias' 'excluir' as can_excluir %}
+              {% if can_excluir %}
               <a href="{% url 'Auth:excluir_auditoria' id_unico=a.id_unico %}" class="btn btn-ghost btn-sm text-danger" title="Excluir"
                  data-confirm="Excluir a auditoria '{{ a.nome_auditoria }}'? Esta ação não pode ser desfeita.">
                 <i class="bi bi-trash"></i>
               </a>
+              {% endif %}
             </span>
             {% endif %}
           </td>
@@ -137,7 +143,7 @@
                 {% elif status_filter %}Tente outro filtro ou crie uma nova auditoria.
                 {% else %}Crie a primeira auditoria para iniciar o acompanhamento.{% endif %}
               </p>
-              {% if not q and request.user.perfil == 'CHEFE' %}
+              {% if not q and can_criar %}
               <a href="{% url 'Auth:adicionar_auditoria' %}" class="btn btn-primary">
                 <i class="bi bi-plus"></i> Nova Auditoria
               </a>

@@ -1,4 +1,5 @@
 {% extends '_base_app.html' %}
+{% load rbac_tags %}
 
 {% block title %}Usuários{% endblock %}
 
@@ -7,19 +8,41 @@
 {% endblock %}
 
 {% block content %}
+{% pode request.user 'usuarios' 'criar' as can_criar %}
+{% pode request.user 'usuarios' 'editar' as can_editar %}
+{% pode request.user 'usuarios' 'excluir' as can_excluir %}
 <div class="page-head">
   <div>
     <h1 class="page-title">Usuários</h1>
-    <p class="page-subtitle">{{ usuarios|length }} usuário{% if usuarios|length != 1 %}s{% endif %} cadastrado{% if usuarios|length != 1 %}s{% endif %}</p>
+    <p class="page-subtitle">{{ paginator.count }} usuário{% if paginator.count != 1 %}s{% endif %} cadastrado{% if paginator.count != 1 %}s{% endif %}</p>
   </div>
   <div class="page-actions">
+    {% if can_criar %}
     <a href="{% url 'Auth:adicionar_usuario' %}" class="btn btn-primary" data-shortcut-new>
       <i class="bi bi-plus"></i> Novo Usuário
     </a>
+    {% endif %}
   </div>
 </div>
 
 <div class="card">
+
+  <!-- ── Toolbar ── -->
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <form method="get" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--fg-muted);font-size:12px;pointer-events:none"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome, usuário ou e-mail…" data-search-input
+               class="form-control" style="padding-left:30px;width:280px;height:32px;font-size:13px">
+      </div>
+    </form>
+    <span style="font-size:12px;color:var(--fg-muted);white-space:nowrap;margin-left:auto">
+      {{ paginator.count }} registro{% if paginator.count != 1 %}s{% endif %}
+    </span>
+  </div>
+
+  <!-- ── Tabela ── -->
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -28,43 +51,48 @@
           <th>Usuário</th>
           <th>E-mail</th>
           <th>Perfil</th>
-          <th class="col-actions">Ações</th>
+          {% if can_editar or can_excluir %}<th class="col-actions">Ações</th>{% endif %}
         </tr>
       </thead>
       <tbody>
         {% for usuario in usuarios %}
         <tr>
           <td>
-            <span class="cell-primary">{{ usuario.get_full_name|default:usuario.username }}</span>
+            <div class="avatar-cell">
+              <span class="avatar" data-uid="{{ usuario.id_unico }}">{{ usuario.iniciais }}</span>
+              <span class="cell-primary">{{ usuario.get_full_name|default:usuario.username }}</span>
+            </div>
           </td>
-          <td class="num">{{ usuario.username }}</td>
-          <td>{{ usuario.email|default:"—" }}</td>
+          <td class="num" style="font-size:13px;color:var(--fg-muted)">{{ usuario.username }}</td>
+          <td style="font-size:13px">{{ usuario.email|default:"—" }}</td>
           <td>
-            {% if usuario.perfil == 'CHEFE' %}
-              <span class="badge badge-accent">Chefe</span>
-            {% else %}
-              <span class="badge">Funcionário</span>
-            {% endif %}
+            <span class="badge">{{ usuario.perfil.nome|default:"—" }}</span>
           </td>
+          {% if can_editar or can_excluir %}
           <td class="col-actions">
+            {% if can_editar %}
             <a href="{% url 'Auth:editar_usuario' id_unico=usuario.id_unico %}" class="btn btn-ghost btn-sm">
               <i class="bi bi-pencil"></i> Editar
             </a>
+            {% endif %}
+            {% if can_excluir %}
             <a href="{% url 'Auth:excluir_usuario' id_unico=usuario.id_unico %}" class="btn btn-ghost btn-sm text-danger">
               <i class="bi bi-trash"></i> Excluir
             </a>
+            {% endif %}
           </td>
+          {% endif %}
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5">
+          <td colspan="{% if can_editar or can_excluir %}5{% else %}4{% endif %}">
             <div class="empty-state">
-              <div class="empty-icon"><i class="bi bi-people"></i></div>
-              <p class="empty-title">Nenhum usuário cadastrado</p>
-              <p class="empty-msg">Adicione usuários para permitir acesso ao sistema.</p>
-              <a href="{% url 'Auth:adicionar_usuario' %}" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Novo Usuário
-              </a>
+              <div class="empty-icon"><i class="bi bi-{% if q %}search{% else %}people{% endif %}"></i></div>
+              <p class="empty-title">{% if q %}Nenhum usuário encontrado para "{{ q }}"{% else %}Nenhum usuário cadastrado{% endif %}</p>
+              <p class="empty-msg">{% if q %}Tente outros termos ou <a href="?per_page={{ per_page }}">limpe a busca</a>.{% else %}Adicione usuários para permitir acesso ao sistema.{% endif %}</p>
+              {% if not q and can_criar %}
+              <a href="{% url 'Auth:adicionar_usuario' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Novo Usuário</a>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -72,5 +100,19 @@
       </tbody>
     </table>
   </div>
+
+  <!-- ── Rodapé ── -->
+  {% include "partials/_pagination.html" %}
+
 </div>
+
+<script>
+(function () {
+  var COLORS = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#6366f1','#ec4899'];
+  document.querySelectorAll('.avatar[data-uid]').forEach(function (el) {
+    var uid = parseInt(el.dataset.uid.replace(/-/g, '').slice(0, 8), 16) || 0;
+    el.style.background = COLORS[uid % COLORS.length];
+  });
+}());
+</script>
 {% endblock %}

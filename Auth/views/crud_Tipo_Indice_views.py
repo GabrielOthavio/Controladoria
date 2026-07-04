@@ -3,24 +3,18 @@
 # ===============================================
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
 
+from ..decorators import requer_permissao, get_per_page
 from ..forms import TipoIndiceForm
 from ..models import TipoIndice
-from .Core_views import is_chefe
 
 @login_required(login_url='Auth:login')
 def lista_tipos_indice(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
     q = request.GET.get('q', '').strip()
     qs = TipoIndice.objects.select_related('indice_grupo').order_by('descricao')
     if q:
@@ -39,11 +33,8 @@ def lista_tipos_indice(request):
 
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('tipos_indice', 'criar')
 def adicionar_tipo_indice(request):
-    """
-    Processa o formulário para adicionar um novo Tipo de Índice.
-    """
     if request.method == 'POST':
         form = TipoIndiceForm(request.POST)
         if form.is_valid():
@@ -52,16 +43,13 @@ def adicionar_tipo_indice(request):
             return redirect('Auth:lista_tipos_indice')
     else:
         form = TipoIndiceForm()
-    context = {'form': form,'titulo': 'Adicionar Tipo de Índice'}
+    context = {'form': form, 'titulo': 'Adicionar Tipo de Índice'}
     return render(request, 'tipos_indice/formulario.html', context)
 
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('tipos_indice', 'editar')
 def editar_tipo_indice(request, id_unico):
-    """
-    Processa o formulário para editar um Tipo de Índice existente.
-    """
     tipo_indice = get_object_or_404(TipoIndice, id_unico=id_unico)
     if request.method == 'POST':
         form = TipoIndiceForm(request.POST, instance=tipo_indice)
@@ -71,15 +59,12 @@ def editar_tipo_indice(request, id_unico):
             return redirect('Auth:lista_tipos_indice')
     else:
         form = TipoIndiceForm(instance=tipo_indice)
-    context = {'form': form,'titulo': f'Editando "{tipo_indice.descricao}"'}
+    context = {'form': form, 'titulo': f'Editando "{tipo_indice.descricao}"'}
     return render(request, 'tipos_indice/formulario.html', context)
 
 @login_required(login_url='Auth:login')
-@user_passes_test(is_chefe, login_url=reverse_lazy('Auth:dashboard'))
+@requer_permissao('tipos_indice', 'excluir')
 def excluir_tipo_indice(request, id_unico):
-    """
-    Exibe a confirmação e processa a exclusão de um Tipo de Índice.
-    """
     tipo_indice = get_object_or_404(TipoIndice, id_unico=id_unico)
     if request.method == 'POST':
         try:

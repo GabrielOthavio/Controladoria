@@ -1,0 +1,17 @@
+{
+  "css.lint.vendorPrefix": "ignore",
+  "scss.lint.vendorPrefix": "ignore",
+
+  "stylelint.rules": {
+    "property-no-unknown": null,
+    "liberty/use-logical-spec": null
+  },
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll.stylelint": "never"
+  },
+
+  "css.customData": [],
+
+  "html.customData": []
+}

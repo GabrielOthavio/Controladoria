@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
-from ..models import Usuario
+from ..models import Usuario, Perfil
 from .utils import validate_cpf
 
 
@@ -45,17 +45,26 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 class AdminUserCreationForm(CustomUserCreationForm):
-    """Formulário de criação de usuário exclusivo para CHEFEs — inclui campo perfil."""
+    """Formulário de criação de usuário exclusivo para admins — inclui campo perfil."""
+    perfil = forms.ModelChoiceField(
+        queryset=Perfil.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Perfil',
+        required=True,
+    )
+
     class Meta(CustomUserCreationForm.Meta):
         fields = CustomUserCreationForm.Meta.fields + ('perfil',)
-        widgets = {
-            **CustomUserCreationForm.Meta.widgets,
-            'perfil': forms.Select(attrs={'class': 'form-select'}),
-        }
 
 
 class CustomUserChangeForm(UserChangeForm):
     password = None  # oculta o hash de senha do formulário de edição
+    perfil = forms.ModelChoiceField(
+        queryset=Perfil.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Perfil',
+        required=True,
+    )
 
     class Meta:
         model = Usuario
@@ -74,7 +83,6 @@ class CustomUserChangeForm(UserChangeForm):
             'bairro':     forms.TextInput(attrs={'class': 'form-control'}),
             'numero':     forms.TextInput(attrs={'class': 'form-control'}),
             'cep':        forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'XXXXX-XXX'}),
-            'perfil':     forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean_cpf(self):

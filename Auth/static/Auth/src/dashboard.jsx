@@ -86,8 +86,117 @@ function PAINTPipeline({ statusData, total, loading }) {
   );
 }
 
+// ─── Change Detail Modal ──────────────────────────────────
+function ChangeDetailModal({ entry, onClose }) {
+  if (!entry) return null;
+
+  const anterior  = entry.estado_anterior  || {};
+  const posterior = entry.estado_posterior || {};
+  const HIDDEN_KEYS = new Set(['id']);
+  const allKeys   = [...new Set([...Object.keys(anterior), ...Object.keys(posterior)])].filter(k => !HIDDEN_KEYS.has(k));
+
+  function renderValue(val) {
+    if (val === null || val === undefined)
+      return <span style={{ color: 'var(--fg-subtle)', fontStyle: 'italic' }}>—</span>;
+    if (typeof val === 'boolean')
+      return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{val ? 'true' : 'false'}</span>;
+    if (typeof val === 'object')
+      return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{JSON.stringify(val)}</span>;
+    return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{String(val)}</span>;
+  }
+
+  function isChanged(key) {
+    return JSON.stringify(anterior[key]) !== JSON.stringify(posterior[key]);
+  }
+
+  const OPERACAO_COLOR = { CRIADO: 'var(--success)', ATUALIZADO: 'var(--warning)', EXCLUIDO: 'var(--danger)' };
+
+  return (
+    <div className="confirm-overlay" onClick={onClose}>
+      <div
+        className="card confirm-dialog"
+        style={{ width: 720, maxWidth: '96vw', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="confirm-header" style={{ gap: 10 }}>
+          <i className="bi bi-eye" style={{ fontSize: 18, color: 'var(--accent)' }} />
+          <h3 className="confirm-title">Detalhes da Alteração</h3>
+          <button
+            onClick={onClose}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 16, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
+          >
+            <i className="bi bi-x-lg" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
+          {/* Meta */}
+          <div className="confirm-details" style={{ marginBottom: 16 }}>
+            <span><i className="bi bi-tag" /> <strong>{entry.tipo_objeto}</strong></span>
+            <span>
+              <i className="bi bi-activity" />
+              <span style={{ fontWeight: 600, color: OPERACAO_COLOR[entry.operacao] }}>{entry.operacao}</span>
+            </span>
+            <span><i className="bi bi-person" /> {entry.usuario}</span>
+            <span><i className="bi bi-clock" /> {entry.data_hora}</span>
+            {entry.uuid_objeto && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                <i className="bi bi-fingerprint" /> {entry.uuid_objeto}
+              </span>
+            )}
+          </div>
+
+          {/* Comparison table */}
+          {allKeys.length > 0 ? (
+            <div className="table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 160 }}>Campo</th>
+                    <th>Dado Anterior</th>
+                    <th>Dado Posterior</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allKeys.map(key => (
+                    <tr key={key} style={isChanged(key) ? { background: 'oklch(0.5 0.08 75 / 0.08)' } : {}}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-muted)' }}>
+                        {isChanged(key) && <i className="bi bi-pencil-fill" style={{ fontSize: 9, marginRight: 5, color: 'var(--warning)' }} />}
+                        {key}
+                      </td>
+                      <td style={{ color: isChanged(key) ? 'var(--danger)' : 'var(--fg-muted)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {renderValue(anterior[key])}
+                      </td>
+                      <td style={{ color: isChanged(key) ? 'var(--success)' : 'var(--fg-muted)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {renderValue(posterior[key])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--fg-subtle)', fontStyle: 'italic', textAlign: 'center', margin: '24px 0' }}>
+              Nenhum detalhe de estado disponível para este registro.
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="confirm-actions">
+          <button className="btn btn-secondary" onClick={onClose}>Fechar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Audit Trail ──────────────────────────────────────────
 function AuditTrail({ entries, loading }) {
+  const [selected, setSelected] = useState(null);
+
   if (loading) {
     return (
       <div className="card">
@@ -115,50 +224,69 @@ function AuditTrail({ entries, loading }) {
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <div>
-          <h3 className="card-title">Trilha de Auditoria</h3>
-          <p className="card-subtitle">Últimas {entries.length} alterações capturadas via Django Signals</p>
+    <>
+      {selected && <ChangeDetailModal entry={selected} onClose={() => setSelected(null)} />}
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <h3 className="card-title">Trilha de Auditoria</h3>
+            <p className="card-subtitle">Últimas {entries.length} alterações capturadas via Django Signals</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Usuário</th>
+                <th className="right">Data / Hora</th>
+                <th style={{ width: 40 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map(entry => (
+                <tr key={entry.id}>
+                  <td>
+                    <span className="badge">
+                      <i className={`bi ${TIPO_ICON[entry.tipo_objeto] || 'bi-file-text'}`} />
+                      {entry.tipo_objeto}
+                    </span>
+                  </td>
+                  <td style={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--fg-muted)' }}>
+                    <span style={{ fontWeight: 600, marginRight: 6 }}>{entry.operacao}</span>
+                    {entry.uuid_objeto && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{entry.uuid_objeto.slice(0, 8)}…</span>}
+                  </td>
+                  <td style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
+                    {entry.usuario === 'Sistema'
+                      ? <span style={{ color: 'var(--fg-subtle)', fontStyle: 'italic' }}>Sistema</span>
+                      : entry.usuario}
+                  </td>
+                  <td className="right num" style={{ fontSize: 12, color: 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>
+                    {entry.data_hora}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button
+                      title="Ver detalhes"
+                      onClick={() => setSelected(entry)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--fg-subtle)', fontSize: 14, padding: '2px 6px',
+                        borderRadius: 'var(--radius-sm)', transition: 'color var(--transition)',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--fg-subtle)'}
+                    >
+                      <i className="bi bi-eye" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Descrição</th>
-              <th>Usuário</th>
-              <th className="right">Data / Hora</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map(entry => (
-              <tr key={entry.id}>
-                <td>
-                  <span className="badge">
-                    <i className={`bi ${TIPO_ICON[entry.tipo_objeto] || 'bi-file-text'}`} />
-                    {entry.tipo_objeto}
-                  </span>
-                </td>
-                <td style={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--fg-muted)' }}>
-                  <span style={{ fontWeight: 600, marginRight: 6 }}>{entry.operacao}</span>
-                  {entry.uuid_objeto && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{entry.uuid_objeto.slice(0, 8)}…</span>}
-                </td>
-                <td style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
-                  {entry.usuario === 'Sistema'
-                    ? <span style={{ color: 'var(--fg-subtle)', fontStyle: 'italic' }}>Sistema</span>
-                    : entry.usuario}
-                </td>
-                <td className="right num" style={{ fontSize: 12, color: 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>
-                  {entry.data_hora}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </>
   );
 }
 

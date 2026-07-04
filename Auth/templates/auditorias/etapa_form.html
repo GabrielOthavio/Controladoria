@@ -1,4 +1,5 @@
 {% extends '_base_app.html' %}
+{% load rbac_tags %}
 
 {% block title %}{{ titulo }}{% endblock %}
 
@@ -11,6 +12,8 @@
 {% endblock %}
 
 {% block content %}
+{% pode request.user 'auditorias' 'editar' as can_editar %}
+{% pode request.user 'auditorias' 'excluir' as can_excluir %}
 <div class="page-head">
   <div>
     <h1 class="page-title">{{ titulo }}</h1>
@@ -94,7 +97,7 @@
           <th>Descrição</th>
           <th>Usuário</th>
           <th class="right">Data</th>
-          {% if request.user.perfil == 'CHEFE' %}<th class="col-actions">Ações</th>{% endif %}
+          {% if can_excluir %}<th class="col-actions">Ações</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -103,7 +106,7 @@
           <td style="white-space:pre-wrap;font-size:13px">{{ achado.descricao }}</td>
           <td style="font-size:12px;color:var(--fg-muted)">{{ achado.usuario.get_full_name|default:achado.usuario.username }}</td>
           <td class="right num" style="font-size:12px;color:var(--fg-subtle)">{{ achado.data_achado|date:"d/m/Y" }}</td>
-          {% if request.user.perfil == 'CHEFE' %}
+          {% if can_excluir %}
           <td class="col-actions">
             <form method="post" action="{% url 'Auth:excluir_achado' id_unico=auditoria.id_unico etapa_id=etapa.id_unico achado_id=achado.id_unico %}" style="margin:0">
               {% csrf_token %}
@@ -127,7 +130,7 @@
   </div>
   {% endif %}
 
-  {% if request.user.perfil == 'CHEFE' %}
+  {% if can_editar %}
   <div class="card-header" style="border-top:1px solid var(--border)"><span class="card-title" style="font-size:13px">Registrar Novo Achado</span></div>
   <div class="card-body">
     <form method="post" novalidate>

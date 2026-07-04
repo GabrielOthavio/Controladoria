@@ -2,20 +2,16 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+
+from ..decorators import requer_permissao, get_per_page
 from ..forms import AuditoriaForm, EtapaForm, AchadoForm
 from ..models import Auditoria, Etapa, Achado
 
 
 @login_required(login_url='Auth:login')
 def lista_auditorias(request):
-    try:
-        per_page = int(request.GET.get('per_page', 16))
-        if per_page not in (8, 16, 32, 64):
-            per_page = 16
-    except (ValueError, TypeError):
-        per_page = 16
+    per_page = get_per_page(request)
 
     q             = request.GET.get('q', '').strip()
     status_filter = request.GET.get('status', '')
@@ -30,13 +26,13 @@ def lista_auditorias(request):
             Q(nome_auditoria__icontains=q) | Q(orgao__icontains=q)
         )
 
-    tab_counts = {
-        'total':        qs_base.count(),
-        'planejada':    qs_base.filter(status='PLANEJADA').count(),
-        'em_andamento': qs_base.filter(status='EM_ANDAMENTO').count(),
-        'concluida':    qs_base.filter(status='CONCLUIDA').count(),
-        'cancelada':    qs_base.filter(status='CANCELADA').count(),
-    }
+    tab_counts = qs_base.aggregate(
+        total=Count('id', distinct=True),
+        planejada=Count('id', filter=Q(status='PLANEJADA'), distinct=True),
+        em_andamento=Count('id', filter=Q(status='EM_ANDAMENTO'), distinct=True),
+        concluida=Count('id', filter=Q(status='CONCLUIDA'), distinct=True),
+        cancelada=Count('id', filter=Q(status='CANCELADA'), distinct=True),
+    )
 
     qs = qs_base
     if status_filter:
@@ -59,9 +55,8 @@ def lista_auditorias(request):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'criar')
 def adicionar_auditoria(request):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem cadastrar auditorias.")
     if request.method == 'POST':
         form = AuditoriaForm(request.POST)
         if form.is_valid():
@@ -74,9 +69,8 @@ def adicionar_auditoria(request):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'editar')
 def editar_auditoria(request, id_unico):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem editar auditorias.")
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     if request.method == 'POST':
         form = AuditoriaForm(request.POST, instance=auditoria)
@@ -90,9 +84,8 @@ def editar_auditoria(request, id_unico):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'excluir')
 def excluir_auditoria(request, id_unico):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem excluir auditorias.")
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     if request.method == 'POST':
         auditoria.delete()
@@ -123,9 +116,8 @@ def gerenciar_auditoria(request, id_unico):
 # ── Etapas ─────────────────────────────────────────────────────────────────────
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'editar')
 def adicionar_etapa(request, id_unico):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem adicionar etapas.")
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     if request.method == 'POST':
         form = EtapaForm(request.POST)
@@ -145,9 +137,8 @@ def adicionar_etapa(request, id_unico):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'editar')
 def editar_etapa(request, id_unico, etapa_id):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem editar etapas.")
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     etapa = get_object_or_404(Etapa, id_unico=etapa_id, auditoria=auditoria)
     achados = etapa.achados.select_related('usuario').all()
@@ -184,9 +175,8 @@ def editar_etapa(request, id_unico, etapa_id):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'excluir')
 def excluir_etapa(request, id_unico, etapa_id):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden("Apenas chefes podem excluir etapas.")
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     etapa = get_object_or_404(Etapa, id_unico=etapa_id, auditoria=auditoria)
     if request.method == 'POST':
@@ -200,9 +190,8 @@ def excluir_etapa(request, id_unico, etapa_id):
 
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'editar')
 def reabrir_etapa(request, id_unico, etapa_id):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden()
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     etapa = get_object_or_404(Etapa, id_unico=etapa_id, auditoria=auditoria)
     if request.method == 'POST':
@@ -215,9 +204,8 @@ def reabrir_etapa(request, id_unico, etapa_id):
 # ── Achados ────────────────────────────────────────────────────────────────────
 
 @login_required(login_url='Auth:login')
+@requer_permissao('auditorias', 'excluir')
 def excluir_achado(request, id_unico, etapa_id, achado_id):
-    if request.user.perfil != 'CHEFE':
-        return HttpResponseForbidden()
     auditoria = get_object_or_404(Auditoria, id_unico=id_unico)
     etapa = get_object_or_404(Etapa, id_unico=etapa_id, auditoria=auditoria)
     achado = get_object_or_404(Achado, id_unico=achado_id, etapa=etapa)

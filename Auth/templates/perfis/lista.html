@@ -1,0 +1,190 @@
+{% extends '_base_app.html' %}
+{% load static %}
+{% load rbac_tags %}
+
+{% block title %}Perfis{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'Auth/css/perfis.css' %}">
+{% endblock %}
+
+{% block breadcrumb_trail %}
+<span class="current">Perfis</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Perfis de Acesso</h1>
+    <p class="page-subtitle">{{ total }} perfil{% if total != 1 %}is{% endif %} cadastrado{% if total != 1 %}s{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    {% pode request.user 'perfis' 'criar' as can_criar %}
+    {% if can_criar %}
+    <a href="{% url 'Auth:adicionar_perfil' %}" class="btn btn-primary" data-shortcut-new>
+      <i class="bi bi-plus"></i> Novo Perfil
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Busca -->
+<div class="card" style="margin-bottom:12px;padding:var(--space-2) var(--space-3)">
+  <form method="get" style="display:flex;align-items:center;gap:8px">
+    <div class="search-wrap">
+      <i class="bi bi-search search-icon"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Buscar perfil…"
+             class="form-control" data-search-input>
+    </div>
+    {% if q %}
+    <a href="{% url 'Auth:lista_perfis' %}" class="btn btn-ghost btn-sm">Limpar</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Árvore de perfis -->
+<div class="card" id="perfis-tree">
+  {% pode request.user 'perfis' 'editar' as can_editar %}
+  {% pode request.user 'perfis' 'excluir' as can_excluir %}
+
+  {% if tree %}
+  <div style="padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <span style="font-size:var(--text-sm);font-weight:600;color:var(--fg)">Hierarquia</span>
+      <span style="font-size:var(--text-xs);color:var(--fg-subtle);margin-left:var(--space-2)">Clique em ▸ para colapsar ramos</span>
+    </div>
+    <div class="legend-wrap">
+      <button type="button" class="legend-btn" aria-label="Legenda de permissões">?</button>
+      <div class="legend-popover" role="tooltip">
+        <p class="legend-popover-title">Cada quadrado = 1 módulo</p>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--level-full-fg)"></span> Total — todas as ações
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--level-manage-fg)"></span> Gerir — ver, criar, editar
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--level-view-fg)"></span> Ver — somente leitura
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:transparent;border:1px solid var(--border)"></span> Sem acesso
+        </div>
+        <p class="legend-hint">Passe o cursor sobre cada quadrado para ver o módulo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:var(--space-2) 0">
+    {% for node in tree %}
+    {% with p=node.perfil d=node.depth %}
+    <div class="tree-row"
+         style="--depth: {{ d }}"
+         data-depth="{{ d }}"
+         data-id="{{ p.id_unico }}"
+         {% if p.parent %}data-parent="{{ p.parent.id_unico }}"{% endif %}>
+
+      {% if d > 0 %}
+      <div class="tree-connector-v" aria-hidden="true"></div>
+      <div class="tree-connector-h" aria-hidden="true"></div>
+      {% endif %}
+
+      <!-- Toggle — placeholder sempre presente para manter colunas alinhadas -->
+      <div class="tree-toggle-cell">
+        <button type="button"
+                class="tree-toggle"
+                aria-hidden="true"
+                aria-label="Colapsar filhos de {{ p.nome }}">
+          <i class="bi bi-chevron-down"></i>
+        </button>
+      </div>
+
+      <!-- Ícone de nível -->
+      <div class="tree-level-icon" aria-hidden="true">
+        {% if d == 0 %}<i class="bi bi-shield-fill"></i>
+        {% elif d == 1 %}<i class="bi bi-shield-half"></i>
+        {% else %}<i class="bi bi-shield"></i>{% endif %}
+      </div>
+
+      <!-- Conteúdo -->
+      <div class="tree-content">
+        <div class="tree-name-row">
+          <span class="tree-name">{{ p.nome }}</span>
+          <span class="tree-user-count">
+            {{ p.usuarios.count }} usuário{% if p.usuarios.count != 1 %}s{% endif %}
+          </span>
+        </div>
+        {% if p.descricao %}
+        <div class="tree-desc">{{ p.descricao|truncatechars:80 }}</div>
+        {% endif %}
+
+        <!-- Dots de permissão -->
+        <div class="perm-dots" role="list" aria-label="Permissões de {{ p.nome }}">
+          {% for code, label in telas %}
+          {% with perm=p.permissoes.all %}
+          {% for pp in perm %}{% if pp.tela == code %}
+          {% if pp.pode_ver and pp.pode_criar and pp.pode_editar and pp.pode_excluir %}
+          <span class="perm-dot perm-dot--full" role="listitem"
+                title="{{ label }}: Total" aria-label="{{ label }}: Total"></span>
+          {% elif pp.pode_ver and pp.pode_criar and pp.pode_editar %}
+          <span class="perm-dot perm-dot--manage" role="listitem"
+                title="{{ label }}: Gerir" aria-label="{{ label }}: Gerir"></span>
+          {% elif pp.pode_ver %}
+          <span class="perm-dot perm-dot--view" role="listitem"
+                title="{{ label }}: Ver" aria-label="{{ label }}: Ver"></span>
+          {% else %}
+          <span class="perm-dot perm-dot--none" role="listitem"
+                title="{{ label }}: Sem acesso" aria-label="{{ label }}: Sem acesso"></span>
+          {% endif %}
+          {% endif %}{% endfor %}
+          {% endwith %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Ações -->
+      {% if can_editar or can_excluir %}
+      <div class="tree-actions">
+        {% if can_editar %}
+        <a href="{% url 'Auth:editar_perfil' id_unico=p.id_unico %}"
+           class="btn btn-ghost btn-sm"
+           title="Editar {{ p.nome }}" aria-label="Editar {{ p.nome }}">
+          <i class="bi bi-pencil"></i>
+        </a>
+        {% endif %}
+        {% if can_excluir %}
+        <a href="{% url 'Auth:excluir_perfil' id_unico=p.id_unico %}"
+           class="btn btn-ghost btn-sm text-danger"
+           title="Excluir {{ p.nome }}" aria-label="Excluir {{ p.nome }}">
+          <i class="bi bi-trash"></i>
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state" style="padding:56px 48px">
+    <div class="empty-icon"><i class="bi bi-shield-lock"></i></div>
+    <p class="empty-title">
+      {% if q %}Nenhum perfil encontrado para "{{ q }}"{% else %}Nenhum perfil cadastrado{% endif %}
+    </p>
+    <p class="empty-msg">
+      {% if q %}Tente outros termos ou <a href="{% url 'Auth:lista_perfis' %}">limpe a busca</a>.
+      {% else %}Perfis definem o nível de acesso de cada usuário no sistema.{% endif %}
+    </p>
+    {% if not q and can_criar %}
+    <a href="{% url 'Auth:adicionar_perfil' %}" class="btn btn-primary">
+      <i class="bi bi-plus"></i> Novo Perfil
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'Auth/js/perfis.js' %}"></script>
+{% endblock %}

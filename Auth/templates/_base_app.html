@@ -1,4 +1,5 @@
 {% load static %}
+{% load rbac_tags %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -80,10 +81,18 @@
         <i class="bi bi-building"></i>
         <span class="nav-label">Entidades</span>
       </a>
-      {% if request.user.perfil == 'CHEFE' %}
+      {% pode request.user 'usuarios' 'ver' as can_usuarios %}
+      {% if can_usuarios %}
       <a href="{% url 'Auth:lista_usuarios' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_usuarios' %}" data-nav-key="usuarios">
         <i class="bi bi-people"></i>
         <span class="nav-label">Usuários</span>
+      </a>
+      {% endif %}
+      {% pode request.user 'perfis' 'ver' as can_perfis %}
+      {% if can_perfis %}
+      <a href="{% url 'Auth:lista_perfis' %}" class="nav-item" data-nav-path="{% url 'Auth:lista_perfis' %}" data-nav-key="perfis">
+        <i class="bi bi-shield-lock"></i>
+        <span class="nav-label">Perfis</span>
       </a>
       {% endif %}
     </div>
@@ -107,11 +116,36 @@
         {% block breadcrumb_trail %}<span class="current">—</span>{% endblock %}
       </nav>
 
-      <span class="topbar-user">{{ request.user.get_full_name|default:request.user.username }}</span>
+      <!-- Avatar dropdown -->
+      <div class="user-menu" id="user-menu">
+        <button type="button" class="user-menu-btn" id="user-menu-btn"
+                aria-haspopup="true" aria-expanded="false" aria-controls="user-dropdown">
+          <span class="user-avatar" aria-hidden="true">
+            {% with name=request.user.get_full_name|default:request.user.username %}
+            {{ name|slice:":1"|upper }}
+            {% endwith %}
+          </span>
+          <span class="user-menu-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+          <i class="bi bi-chevron-down user-menu-chevron" aria-hidden="true"></i>
+        </button>
+        <div class="user-dropdown" id="user-dropdown">
+          <button type="button" class="user-dropdown-item"
+                  onclick="document.getElementById('tweaks-btn').click();document.getElementById('user-dropdown').classList.remove('open');document.getElementById('user-menu-btn').classList.remove('open')">
+            <i class="bi bi-sliders" aria-hidden="true"></i> Aparência
+          </button>
+          <div class="user-dropdown-sep"></div>
+          <form method="post" action="{% url 'Auth:logout' %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="user-dropdown-item danger">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sair
+            </button>
+          </form>
+        </div>
+      </div>
 
       <!-- Tweaks -->
       <div class="tweaks-container">
-        <button class="tweaks-btn" id="tweaks-btn" title="Aparência">
+        <button class="tweaks-btn" id="tweaks-btn" title="Aparência" aria-label="Aparência">
           <i class="bi bi-sliders"></i>
         </button>
         <div class="tweaks-dropdown" id="tweaks-dropdown">
@@ -133,13 +167,6 @@
         </div>
       </div>
 
-      <!-- Logout -->
-      <form method="post" action="{% url 'Auth:logout' %}" style="margin:0">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-ghost btn-sm">
-          <i class="bi bi-box-arrow-right"></i> Sair
-        </button>
-      </form>
     </header>
 
     <!-- Page content -->

@@ -1,4 +1,5 @@
 {% extends '_base_app.html' %}
+{% load rbac_tags %}
 
 {% block title %}Entidades de Auditoria{% endblock %}
 
@@ -7,13 +8,15 @@
 {% endblock %}
 
 {% block content %}
+{% pode request.user 'entidades' 'criar' as can_criar %}
+{% pode request.user 'entidades' 'editar' as can_editar %}
 <div class="page-head">
   <div>
     <h1 class="page-title">Entidades de Auditoria</h1>
     <p class="page-subtitle">{{ paginator.count }} entidade{% if paginator.count != 1 %}s{% endif %} cadastrada{% if paginator.count != 1 %}s{% endif %}</p>
   </div>
   <div class="page-actions">
-    {% if request.user.perfil == 'CHEFE' %}
+    {% if can_criar %}
     <a href="{% url 'Auth:adicionar_entidade' %}" class="btn btn-primary" data-shortcut-new>
       <i class="bi bi-plus"></i> Nova Entidade
     </a>
@@ -44,32 +47,35 @@
       <thead>
         <tr>
           <th>Nome da Entidade</th>
-          {% if request.user.perfil == 'CHEFE' %}<th class="col-actions">Ações</th>{% endif %}
+          {% if can_editar %}<th class="col-actions">Ações</th>{% endif %}
         </tr>
       </thead>
       <tbody>
         {% for entidade in entidades %}
         <tr>
           <td><span class="cell-primary">{{ entidade.nome }}</span></td>
-          {% if request.user.perfil == 'CHEFE' %}
+          {% if can_editar %}
           <td class="col-actions">
             <a href="{% url 'Auth:editar_entidade' id_unico=entidade.id_unico %}" class="btn btn-ghost btn-sm">
               <i class="bi bi-pencil"></i> Editar
             </a>
+            {% pode request.user 'entidades' 'excluir' as can_excluir %}
+            {% if can_excluir %}
             <a href="{% url 'Auth:excluir_entidade' id_unico=entidade.id_unico %}" class="btn btn-ghost btn-sm text-danger">
               <i class="bi bi-trash"></i> Excluir
             </a>
+            {% endif %}
           </td>
           {% endif %}
         </tr>
         {% empty %}
         <tr>
-          <td colspan="{% if request.user.perfil == 'CHEFE' %}2{% else %}1{% endif %}">
+          <td colspan="{% if can_editar %}2{% else %}1{% endif %}">
             <div class="empty-state">
               <div class="empty-icon"><i class="bi bi-{% if q %}search{% else %}building{% endif %}"></i></div>
               <p class="empty-title">{% if q %}Nenhuma entidade encontrada para "{{ q }}"{% else %}Nenhuma entidade cadastrada{% endif %}</p>
               <p class="empty-msg">{% if q %}Tente outros termos ou <a href="?per_page={{ per_page }}">limpe a busca</a>.{% else %}Entidades são vinculadas às matrizes de auditoria.{% endif %}</p>
-              {% if not q and request.user.perfil == 'CHEFE' %}
+              {% if not q and can_criar %}
               <a href="{% url 'Auth:adicionar_entidade' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Nova Entidade</a>
               {% endif %}
             </div>

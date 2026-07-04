@@ -26,6 +26,7 @@
   --bg-sunken:   oklch(0.975 0.004 240);
   --bg-hover:    oklch(0.955 0.005 240);
   --bg-active:   oklch(0.93 0.007 240);
+  --surface-raised: var(--bg-hover);
   --border:      oklch(0.92 0.005 240);
   --border-strong: oklch(0.85 0.008 240);
   --fg:          oklch(0.18 0.005 240);
@@ -46,6 +47,7 @@
   --bg-sunken:   oklch(0.14 0.006 260);
   --bg-hover:    oklch(0.25 0.008 260);
   --bg-active:   oklch(0.28 0.01 260);
+  --surface-raised: var(--bg-hover);
   --border:      oklch(0.28 0.008 260);
   --border-strong: oklch(0.36 0.01 260);
   --fg:          oklch(0.97 0.003 260);
@@ -67,7 +69,7 @@
 html, body { margin: 0; padding: 0; }
 body {
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--text-base, 14px);
   line-height: 1.5;
   color: var(--fg);
   background: var(--bg);
@@ -788,6 +790,7 @@ select[multiple] {
 .paint-badge {
   display: inline-flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(91, 143, 255, 0.15);
   background: color-mix(in oklch, var(--accent) 15%, transparent);
   color: var(--accent); font-size: 9px; vertical-align: middle; margin-left: 4px;
 }
@@ -796,3 +799,156 @@ select[multiple] {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ==========================================================
+   Tokens v2 — adicionados para o módulo Perfis RBAC
+   ========================================================== */
+
+/* Escala tipográfica */
+:root {
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-lg:   15px;
+  --text-xl:   20px;
+
+  /* Escala de espaço padrão (comfortable) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* Sombra intermediária */
+  --shadow-md: 0 8px 24px oklch(0 0 0 / 0.08);
+}
+
+/* Tokens de nível de permissão — tema claro */
+[data-theme="light"] {
+  --level-none-fg:   var(--fg-subtle);
+  --level-view-fg:   var(--success);
+  --level-manage-fg: var(--warning);
+  --level-full-fg:   var(--accent);
+  --level-view-bg:   oklch(0.55 0.13 155 / 0.10);
+  --level-manage-bg: oklch(0.65 0.15 75  / 0.10);
+  --level-full-bg:   var(--accent-soft);
+  --danger-bg:       oklch(0.55 0.18 25  / 0.10);
+}
+
+/* Tokens de nível de permissão — tema escuro */
+[data-theme="dark"] {
+  --level-none-fg:   var(--fg-subtle);
+  --level-view-fg:   var(--success);
+  --level-manage-fg: var(--warning);
+  --level-full-fg:   var(--accent);
+  --level-view-bg:   oklch(0.70 0.15 155 / 0.12);
+  --level-manage-bg: oklch(0.78 0.15 75  / 0.12);
+  --level-full-bg:   var(--accent-soft);
+  --danger-bg:       oklch(0.65 0.18 25  / 0.12);
+}
+
+/* Escala de espaço por densidade */
+[data-density="compact"] {
+  --space-1: 3px; --space-2: 6px;  --space-3: 10px; --space-4: 14px;
+  --space-5: 18px; --space-6: 20px; --space-7: 28px; --space-8: 36px;
+}
+[data-density="comfortable"] {
+  --space-1: 4px; --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 40px;
+}
+[data-density="spacious"] {
+  --space-1: 6px; --space-2: 12px; --space-3: 16px; --space-4: 22px;
+  --space-5: 28px; --space-6: 36px; --space-7: 44px; --space-8: 56px;
+}
+
+/* ===== Search with icon (componente compartilhado) ===== */
+.search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+}
+.search-wrap .search-icon {
+  position: absolute;
+  left: 9px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+.search-wrap .form-control {
+  padding-left: 30px;
+  height: 32px;
+  font-size: var(--text-base);
+}
+
+/* ===== Avatar dropdown (topbar) ===== */
+.user-menu { position: relative; }
+.user-menu-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.user-menu-btn:hover { background: var(--bg-hover); border-color: var(--border); color: var(--fg); }
+.user-menu-btn.open  { background: var(--bg-active); border-color: var(--border); color: var(--fg); }
+.user-menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.user-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+.user-menu-name {
+  max-width: 120px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.user-menu-chevron {
+  font-size: 10px; color: var(--fg-subtle);
+  transition: transform var(--transition);
+}
+.user-menu-btn.open .user-menu-chevron { transform: rotate(180deg); }
+
+.user-dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 180px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  padding: 4px;
+  display: none;
+}
+.user-dropdown.open { display: block; }
+
+.user-dropdown-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: var(--text-base);
+  color: var(--fg-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  background: none; border: none;
+  font-family: inherit;
+  transition: background var(--transition), color var(--transition);
+}
+.user-dropdown-item:hover { background: var(--bg-hover); color: var(--fg); text-decoration: none; }
+.user-dropdown-item.danger:hover { background: var(--danger-bg); color: var(--danger); }
+.user-dropdown-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius-sm); }
+
+.user-dropdown-sep { height: 1px; background: var(--border); margin: 4px 0; }
