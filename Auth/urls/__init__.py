@@ -14,5 +14,7 @@ urlpatterns = [
     path('', include('Auth.urls.tipo_indice')),
     path('', include('Auth.urls.grupo_indice')),
     path('', include('Auth.urls.api')),
+    path('', include('Auth.urls.api_mobile')),
     path('', include('Auth.urls.perfil')),
+    path('', include('Auth.urls.conflito')),
 ]

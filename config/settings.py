@@ -89,6 +89,17 @@ FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY')
 if not FIELD_ENCRYPTION_KEY:
     raise ValueError("A variável de ambiente FIELD_ENCRYPTION_KEY não está definida.")
 
+# API interna consumida pelo sync-backend (NestJS) do app de campo — nunca
+# exposta a sessões de browser, autenticada por segredo compartilhado +
+# allowlist de IP (ver Auth.decorators.requer_chave_interna).
+MOBILE_SYNC_API_KEY = os.environ.get('MOBILE_SYNC_API_KEY')
+if not MOBILE_SYNC_API_KEY:
+    raise ValueError("A variável de ambiente MOBILE_SYNC_API_KEY não está definida.")
+
+MOBILE_SYNC_ALLOWED_IPS = [
+    ip.strip() for ip in os.environ.get('MOBILE_SYNC_ALLOWED_IPS', '').split(',') if ip.strip()
+]
+
 LOGIN_URL = 'Auth:login'
 LOGIN_REDIRECT_URL = 'Auth:dashboard'
 LOGOUT_REDIRECT_URL = 'Auth:login'

@@ -10,7 +10,7 @@ from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.conf import settings
 from django.utils.functional import cached_property
-from encrypted_model_fields.fields import EncryptedCharField
+from encrypted_model_fields.fields import EncryptedCharField, EncryptedTextField, EncryptedMixin
 
 
 # ---------------------------------------------------------------------------
@@ -381,6 +381,10 @@ class Etapa(models.Model):
     situacao   = models.CharField(max_length=20, choices=SITUACAO_CHOICES, default='PENDENTE', verbose_name="Situação")
     metodo     = models.CharField(max_length=255, blank=True, default='', verbose_name="Método")
     data_criacao = models.DateTimeField(auto_now_add=True)
+    # Chave de idempotência do app de campo (mobile), mesmo padrão de
+    # Achado.origem_mobile_uuid: um retry de sincronização após falha de
+    # rede reutiliza o get_or_create em vez de duplicar a Etapa.
+    origem_mobile_uuid = models.UUIDField(null=True, blank=True, unique=True, verbose_name="UUID de Origem (Mobile)")
 
     class Meta:
         verbose_name = "Etapa"
@@ -391,12 +395,66 @@ class Etapa(models.Model):
         return f"{self.auditoria.nome_auditoria} — {self.atividade[:50]}"
 
 
+class ConflitoEtapa(models.Model):
+    """
+    Registrado quando uma edição de Etapa vinda do app mobile chega com um
+    `baseline` (estado que o dispositivo achava ser verdade antes de editar)
+    que não bate mais com o estado atual da Etapa — ou seja, alguém mudou
+    o dado nesse meio-tempo (outro dispositivo, ou o próprio sistema web).
+    A resolução não é automática: fica pendente até alguém com nível de
+    acesso suficiente escolher qual dos dois conjuntos de campos prevalece.
+    """
+    STATUS_CHOICES = [
+        ('PENDENTE', 'Pendente'),
+        ('RESOLVIDO', 'Resolvido'),
+    ]
+
+    id_unico = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    etapa = models.ForeignKey(Etapa, on_delete=models.CASCADE, related_name='conflitos', verbose_name="Etapa")
+
+    usuario_originador = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
+        related_name='conflitos_originados', verbose_name="Usuário Originador",
+    )
+    dados_originador = models.JSONField(verbose_name="Dados do Originador")
+
+    usuario_atual = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='conflitos_como_atual', verbose_name="Usuário da Versão Atual",
+    )
+    dados_atuais = models.JSONField(verbose_name="Dados Atuais no Momento do Conflito")
+
+    atribuido_a = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='conflitos_atribuidos', verbose_name="Atribuído A",
+    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE', verbose_name="Status")
+    resolvido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='conflitos_resolvidos', verbose_name="Resolvido Por",
+    )
+    resolvido_em = models.DateTimeField(null=True, blank=True, verbose_name="Resolvido Em")
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name="Criado Em")
+
+    class Meta:
+        verbose_name = "Conflito de Etapa"
+        verbose_name_plural = "Conflitos de Etapa"
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f"Conflito — {self.etapa.atividade[:40]} ({self.status})"
+
+
 class Achado(models.Model):
     id_unico     = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     etapa        = models.ForeignKey(Etapa, on_delete=models.CASCADE, related_name='achados', verbose_name="Etapa")
-    descricao    = models.TextField(verbose_name="Descrição do Achado")
+    descricao    = EncryptedTextField(verbose_name="Descrição do Achado")
     data_achado  = models.DateField(auto_now_add=True, verbose_name="Data do Achado")
     usuario      = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name="Usuário")
+    # Chave de idempotência do app de campo (mobile): permite que um retry de
+    # sincronização após falha de rede reutilize o get_or_create em vez de
+    # duplicar o Achado.
+    origem_mobile_uuid = models.UUIDField(null=True, blank=True, unique=True, verbose_name="UUID de Origem (Mobile)")
 
     class Meta:
         verbose_name = "Achado"
@@ -501,12 +559,15 @@ CAMPOS_SENSIVEIS = {'password', 'last_login', 'email'}
 def _serializar_instancia(instance):
     """
     Retorna um dict com os campos escalares do modelo.
-    Campos EncryptedCharField e CAMPOS_SENSIVEIS são marcados como [PROTEGIDO]
-    para não expor dados sensíveis no log de auditoria.
+    Campos cifrados (qualquer Encrypted*Field — EncryptedMixin é a base
+    comum de EncryptedCharField, EncryptedTextField etc.) e CAMPOS_SENSIVEIS
+    são marcados como [PROTEGIDO] para não expor dados sensíveis no log de
+    auditoria. Checar só EncryptedCharField deixaria vazar em texto plano
+    qualquer outro Encrypted*Field (ex.: EncryptedTextField do Achado).
     """
     resultado = {}
     for field in instance._meta.concrete_fields:
-        if isinstance(field, EncryptedCharField) or field.name in CAMPOS_SENSIVEIS:
+        if isinstance(field, EncryptedMixin) or field.name in CAMPOS_SENSIVEIS:
             resultado[field.name] = '[PROTEGIDO]'
             continue
         value = field.value_from_object(instance)
